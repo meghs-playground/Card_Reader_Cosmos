@@ -771,7 +771,8 @@ if (saved && saved !== DEV_BACKEND) {
   BACKEND_URL = isLocal ? DEV_BACKEND : PROD_BACKEND;
 }
 let AUTH_TOKEN = localStorage.getItem('cosmos_auth_token') || null;
-
+const DEMO_EMAIL    = 'admin@cosmos.local';
+const DEMO_PASSWORD = 'abcd';  
 const API = {
   _headers() {
     const h = { 'Content-Type': 'application/json' };
@@ -1716,6 +1717,12 @@ function toast(msg, type='i', dur=3500) {
    INIT
 ══════════════════════════════════════════════════════════ */
 async function init() {
+  try {
+    await API.login(DEMO_EMAIL, DEMO_PASSWORD);
+  } catch (e) {
+    console.warn('Auto-login failed:', e.message);
+  }
+
   // Sidebar nav
   document.querySelectorAll('.sb-item').forEach(el => {
     el.addEventListener('click', () => switchPage(el.dataset.page));
