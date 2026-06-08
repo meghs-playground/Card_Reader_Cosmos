@@ -664,40 +664,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
             <div class="hint">Stored in browser localStorage only. Never sent to any server other than Anthropic. Never committed to source code.</div>
             <button class="set-btn" style="margin-top:10px" onclick="saveDefaults()">Save Key</button>
           </div>
-          <div class="set-panel" style="margin-bottom:14px">
-            <div class="set-title">Backend Connection</div>
-            <div class="set-row"><div class="set-label">Backend API URL</div>
-              <input class="set-input" id="settBackendUrl" placeholder="http://localhost:4000">
-            </div>
-            <div class="hint">Enter the URL of your hosted Node.js backend (e.g., https://cosmos-backend.onrender.com). Leave empty to reset to localhost.</div>
-            <button class="set-btn" style="margin-top:10px" onclick="saveBackendUrl()">Save Backend URL</button>
-          </div>
-          <div class="set-panel" style="margin-bottom:14px" id="settAuthPanel">
-            <div class="set-title">Backend Authentication</div>
-            <div id="authLoggedOut">
-              <div class="set-row"><div class="set-label">Email Address</div>
-                <input class="set-input" id="settEmail" placeholder="admin@cosmos.local">
-              </div>
-              <div class="set-row"><div class="set-label">Password</div>
-                <input class="set-input" id="settPassword" type="password" placeholder="••••••••">
-              </div>
-              <button class="set-btn" style="margin-top:10px" onclick="doLogin()">Login to Backend</button>
-            </div>
-            <div id="authLoggedIn" class="hidden">
-              <div class="hint" style="margin-bottom:10px;font-weight:600" id="loggedInUserMsg">Logged in as admin@cosmos.local</div>
-              <button class="set-btn" style="background:var(--rose2);border-color:rgba(239,68,68,.3);color:var(--rose)" onclick="doLogout()">Logout</button>
-            </div>
-          </div>
-          <div class="set-panel">
-            <div class="set-title">Export Defaults</div>
-            <div class="set-row"><div class="set-label">Default Sales Branch</div>
-              <input class="set-input" id="settBranch" placeholder="e.g. West - Ahmedabad">
-            </div>
-            <div class="set-row"><div class="set-label">Default Assigned To</div>
-              <input class="set-input" id="settAssigned" placeholder="e.g. Raj Patel">
-            </div>
-            <button class="set-btn" onclick="saveDefaults()">Save Defaults</button>
-          </div>
         </div>
         <div class="set-panel">
           <div class="set-title">Cosmos CRM Column Order</div>
