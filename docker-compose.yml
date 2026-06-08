@@ -1,0 +1,128 @@
+version: "3.9"
+
+# ============================================================================
+# Cosmos Lead Intelligence Platform — Full Stack
+# ============================================================================
+# Services:
+#   postgres   — primary database
+#   redis      — job queue (Bull) + session cache
+#   backend    — Node.js API (Express + Prisma)
+#   ocr        — Python CV/OCR microservice (FastAPI)
+#
+# Usage:
+#   Development:   docker compose up
+#   Production:    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ============================================================================
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: cosmos_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER:-cosmos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cosmos}
+      POSTGRES_DB:       ${POSTGRES_DB:-cosmos_leads}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cosmos} -d ${POSTGRES_DB:-cosmos_leads}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cosmos_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-cosmos_redis}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-cosmos_redis}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Node.js Backend ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cosmos_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ocr:
+        condition: service_healthy
+    environment:
+      NODE_ENV:            production
+      PORT:                4000
+      DATABASE_URL:        postgresql://${POSTGRES_USER:-cosmos}:${POSTGRES_PASSWORD:-cosmos}@postgres:5432/${POSTGRES_DB:-cosmos_leads}?schema=public
+      JWT_SECRET:          ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_EXPIRES_IN:      ${JWT_EXPIRES_IN:-12h}
+      CORS_ORIGIN:         ${CORS_ORIGIN:-http://localhost:5173}
+      CV_OCR_URL:          http://ocr:8000
+      REDIS_URL:           redis://:${REDIS_PASSWORD:-cosmos_redis}@redis:6379
+      UPLOAD_DIR:          /app/uploads/incoming
+      CROPS_DIR:           /app/uploads/crops
+      EXPORT_DIR:          /app/exports/output
+      CONFIDENCE_FALLBACK_THRESHOLD: ${CONFIDENCE_FALLBACK_THRESHOLD:-0.85}
+      RATE_LIMIT_WINDOW_MS:  ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX:        ${RATE_LIMIT_MAX:-200}
+      AUTH_RATE_LIMIT_MAX:   ${AUTH_RATE_LIMIT_MAX:-10}
+      UPLOAD_RATE_LIMIT_MAX: ${UPLOAD_RATE_LIMIT_MAX:-50}
+      EXPORT_RATE_LIMIT_MAX: ${EXPORT_RATE_LIMIT_MAX:-30}
+      OCR_CONCURRENCY:       ${OCR_CONCURRENCY:-2}
+    volumes:
+      - uploads_data:/app/uploads
+      - exports_data:/app/exports
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ── Python OCR Microservice ────────────────────────────────────────────────
+  ocr:
+    build:
+      context: ./backend/ocr
+      dockerfile: Dockerfile
+    container_name: cosmos_ocr
+    restart: unless-stopped
+    environment:
+      PADDLE_DISABLED:               ${PADDLE_DISABLED:-0}
+      CONFIDENCE_FALLBACK_THRESHOLD: ${CONFIDENCE_FALLBACK_THRESHOLD:-0.85}
+      PDF_RASTER_DPI:                ${PDF_RASTER_DPI:-200}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 60s    # PaddleOCR model download takes time on first boot
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
+  exports_data:
+
+networks:
+  default:
+    name: cosmos_network

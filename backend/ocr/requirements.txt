@@ -1,0 +1,38 @@
+# ============================================================
+# Cosmos CV/OCR Service — Python dependencies
+# ============================================================
+# Python compatibility:
+#   Option A (RECOMMENDED): Python 3.11 — full PaddleOCR support
+#   Option B: Python 3.12 — use paddlepaddle-gpu==0.0.0 + paddleocr>=2.8.1
+#   Option C: Python 3.14 — PaddlePaddle NOT supported; use Tesseract-only mode
+#             (set PADDLE_DISABLED=1 env var — OCR falls back to Tesseract only)
+#
+# Docker (recommended): use python:3.11-slim base image
+# ============================================================
+
+# Web framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+
+# Numerics / image processing
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+
+# OCR engines
+# PaddleOCR — requires Python <=3.11 for paddlepaddle CPU build
+# If on Python 3.12+, comment out paddlepaddle and paddleocr lines
+# and set PADDLE_DISABLED=1 in environment.
+paddleocr==2.8.1
+paddlepaddle==2.6.2; python_version < "3.12"
+
+# Tesseract wrapper (always enabled as fallback)
+pytesseract==0.3.13
+Pillow==10.4.0
+
+# PDF rasterisation
+PyMuPDF==1.24.14
+
+# ── System packages (install via apt in Dockerfile or manually on host) ──
+# tesseract-ocr tesseract-ocr-eng
+# libgl1 libglib2.0-0 libsm6 libxrender1 libxext6

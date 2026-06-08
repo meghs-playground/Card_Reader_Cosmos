@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cosmos Lead Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b1220;--sidebar:#0e1526;--panel:#111927;--card:#141f30;--card2:#192336;--inp:#0d1825;
+  --teal:#00c4cc;--teal2:rgba(0,196,204,.12);--teal3:rgba(0,196,204,.22);
+  --green:#22c55e;--green2:rgba(34,197,94,.12);
+  --amber:#f59e0b;--amber2:rgba(245,158,11,.12);
+  --rose:#ef4444;--rose2:rgba(239,68,68,.12);
+  --blue:#3b82f6;--blue2:rgba(59,130,246,.12);
+  --w1:#e2eeff;--w2:#8aa0be;--w3:#4a6080;--w4:#1e2d42;
+  --bdr:rgba(255,255,255,.06);--bdr2:rgba(0,196,204,.18);
+  --sans:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:8px;--r2:12px;--t:.18s ease;
+}
+html{height:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;overflow:hidden;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,196,204,.2);border-radius:2px}
+
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+.sb-logo{padding:20px 20px 16px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.sb-logo .cosname{font-size:20px;font-weight:900;letter-spacing:1px;color:var(--w1);line-height:1}
+.sb-logo .cosname span{color:var(--teal)}
+.sb-logo .tagline{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--w3);margin-top:2px;font-weight:500}
+.sb-logo .sub{font-size:9px;color:var(--w3);margin-top:4px;font-family:var(--mono)}
+.sb-nav{flex:1;padding:12px 10px}
+.sb-section{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--w3);padding:14px 10px 6px}
+.sb-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:var(--r);color:var(--w2);font-size:13px;font-weight:500;cursor:pointer;transition:var(--t);position:relative;margin-bottom:2px;user-select:none}
+.sb-item:hover{background:rgba(255,255,255,.04);color:var(--w1)}
+.sb-item.active{background:linear-gradient(135deg,rgba(0,196,204,.15),rgba(0,196,204,.06));color:var(--teal);border-left:3px solid var(--teal);padding-left:9px}
+.sb-item i{width:18px;text-align:center;font-size:14px;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--teal);color:#000;font-size:10px;font-weight:700;min-width:20px;height:20px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 5px;font-family:var(--mono)}
+.sb-badge.orange{background:var(--amber)}
+.sb-footer{padding:14px 20px;border-top:1px solid var(--bdr);font-size:9px;color:var(--w3);line-height:1.6;flex-shrink:0}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:58px;flex-shrink:0;background:var(--sidebar);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.topbar-left h1{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.topbar-left p{font-size:12px;color:var(--w2);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.top-btn{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:var(--r);background:rgba(255,255,255,.04);border:1px solid var(--bdr);color:var(--w2);font-size:12px;font-weight:500;cursor:pointer;transition:var(--t);font-family:var(--sans)}
+.top-btn:hover{border-color:var(--bdr2);color:var(--w1)}
+.top-btn.primary{background:var(--teal2);border-color:var(--bdr2);color:var(--teal)}
+.top-btn.primary:hover{background:rgba(0,196,204,.2)}
+.notif-btn{position:relative;width:36px;height:36px;border-radius:var(--r);background:rgba(255,255,255,.04);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--w2)}
+.notif-btn .badge{position:absolute;top:-5px;right:-5px;background:var(--rose);color:#fff;font-size:8px;font-weight:700;min-width:16px;height:16px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 3px;font-family:var(--mono)}
+.content{flex:1;overflow-y:auto;padding:20px 22px}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--r2);padding:14px 16px;transition:var(--t);cursor:default}
+.stat-card:hover{border-color:rgba(255,255,255,.1);background:var(--card)}
+.stat-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.stat-label{font-size:11px;color:var(--w2);font-weight:500}
+.stat-num{font-size:26px;font-weight:800;line-height:1;letter-spacing:-.5px}
+.stat-delta{font-size:10px;color:var(--green);margin-top:4px;display:flex;align-items:center;gap:3px}
+.stat-delta.down{color:var(--rose)}
+
+/* ── ROW2 ── */
+.row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+.panel{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--r2);overflow:hidden}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bdr)}
+.panel-title{font-size:13px;font-weight:700}
+.panel-act{font-size:11px;color:var(--teal);cursor:pointer;font-weight:500}
+.panel-act:hover{text-decoration:underline}
+.panel-body{padding:14px 16px}
+.fmt-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:var(--mono)}
+.fmt-jpg{background:#e2a800}.fmt-png{background:#0ea5e9}.fmt-pdf{background:#ef4444}
+.dropzone{border:1.5px dashed rgba(255,255,255,.14);border-radius:var(--r2);padding:28px 20px;text-align:center;cursor:pointer;transition:var(--t);margin:12px 0}
+.dropzone:hover{border-color:var(--teal3);background:rgba(0,196,204,.02)}
+.dropzone.drag{border-color:var(--teal);box-shadow:0 0 20px rgba(0,196,204,.1)}
+.dz-icon{font-size:36px;color:var(--w3);margin-bottom:10px}
+.dz-title{font-size:13px;font-weight:600;color:var(--w1);margin-bottom:4px}
+.dz-sub{font-size:11px;color:var(--w3)}
+.dz-btn{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:8px 18px;background:transparent;border:1.5px solid var(--teal3);border-radius:var(--r);color:var(--teal);font-size:12px;font-weight:600;cursor:pointer;transition:var(--t);font-family:var(--sans)}
+.dz-btn:hover{background:var(--teal2)}
+.upload-hidden{display:none}
+.queue-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.queue-item:last-child{border-bottom:none}
+.qi-icon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.qi-pdf{background:rgba(239,68,68,.15);color:var(--rose)}
+.qi-jpg{background:rgba(59,130,246,.15);color:var(--blue)}
+.qi-info{flex:1;min-width:0}
+.qi-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qi-meta{font-size:10px;color:var(--w3);font-family:var(--mono);margin-top:2px}
+.qi-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.qi-pct{font-family:var(--mono);font-size:12px;font-weight:600}
+.qi-status{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
+.qi-done{background:rgba(34,197,94,.2);color:var(--green)}
+.qi-spin{background:rgba(245,158,11,.15);color:var(--amber)}
+.qi-fail{background:rgba(239,68,68,.15);color:var(--rose)}
+.qi-prog{height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-top:5px}
+.qi-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.preview-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.preview-card{background:var(--card2);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;aspect-ratio:1.75;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:var(--t)}
+.preview-card:hover{border-color:var(--bdr2)}
+.preview-card img{width:100%;height:100%;object-fit:cover}
+.preview-card .card-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;font-size:9px;color:var(--w3);text-align:center;font-family:var(--mono);padding:6px}
+.preview-more{background:rgba(0,196,204,.08);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;font-size:11px;color:var(--teal);font-weight:600;cursor:pointer;aspect-ratio:1.75;border-radius:var(--r)}
+.preview-stat{display:flex;align-items:center;justify-content:space-between;padding:10px 0 0;border-top:1px solid var(--bdr);margin-top:10px;font-size:12px;color:var(--w2)}
+.view-all-btn{padding:5px 12px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);color:var(--teal);font-size:11px;font-weight:600;cursor:pointer;transition:var(--t);font-family:var(--sans)}
+.view-all-btn:hover{background:var(--teal2)}
+
+/* ── LEADS TABLE ── */
+.leads-panel{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--r2);overflow:hidden}
+.leads-toolbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bdr);flex-wrap:wrap}
+.leads-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.count-badge{background:rgba(0,196,204,.15);border:1px solid var(--bdr2);color:var(--teal);font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--w3);font-size:12px;pointer-events:none}
+.search-in{width:100%;padding:7px 10px 7px 30px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w1);font-family:var(--mono);font-size:11px;outline:none;transition:border-color var(--t)}
+.search-in:focus{border-color:var(--bdr2)}
+.search-in::placeholder{color:var(--w3)}
+.filter-sel{padding:7px 12px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w2);font-size:11px;cursor:pointer;outline:none;transition:border-color var(--t);font-family:var(--sans)}
+.review-btn{padding:7px 14px;background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w1);font-size:12px;font-weight:600;cursor:pointer;transition:var(--t);font-family:var(--sans)}
+.review-btn:hover{border-color:var(--bdr2)}
+.approve-btn{padding:7px 16px;background:var(--teal2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--teal);font-size:12px;font-weight:700;cursor:pointer;transition:var(--t);font-family:var(--sans)}
+.approve-btn:hover{background:rgba(0,196,204,.22)}
+.leads-table{width:100%;border-collapse:collapse}
+.leads-table th{text-align:left;padding:9px 12px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--w3);border-bottom:1px solid var(--bdr);background:var(--card);white-space:nowrap}
+.leads-table td{padding:10px 12px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--w2);vertical-align:middle;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leads-table tr:hover td{background:rgba(255,255,255,.018);color:var(--w1)}
+.leads-table td:nth-child(3){color:var(--w1);font-weight:600}
+.cb{width:14px;height:14px;accent-color:var(--teal);cursor:pointer}
+.card-thumb{width:44px;height:28px;border-radius:4px;background:var(--card2);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--w3);overflow:hidden;flex-shrink:0}
+.card-thumb img{width:100%;height:100%;object-fit:cover}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:600;font-family:var(--mono);white-space:nowrap}
+.st-extracted{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.25)}
+.st-approved{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.st-review{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.25)}
+.st-rejected{background:rgba(239,68,68,.15);color:var(--rose);border:1px solid rgba(239,68,68,.25)}
+.action-btns{display:flex;gap:4px}
+.act-btn{width:26px;height:26px;border-radius:5px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);color:var(--w3);font-size:11px;cursor:pointer;transition:var(--t);display:flex;align-items:center;justify-content:center;font-family:var(--sans)}
+.act-btn:hover{border-color:var(--bdr2);color:var(--teal)}
+.act-btn.del:hover{border-color:rgba(239,68,68,.3);color:var(--rose)}
+.act-btn.apv:hover{border-color:rgba(34,197,94,.3);color:var(--green)}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid var(--bdr);font-size:12px;color:var(--w2)}
+.pg-btns{display:flex;gap:3px;align-items:center}
+.pg-btn{width:28px;height:28px;border-radius:5px;border:1px solid var(--bdr);background:transparent;color:var(--w3);font-size:11px;font-family:var(--mono);cursor:pointer;transition:var(--t);display:flex;align-items:center;justify-content:center;font-family:var(--sans)}
+.pg-btn:hover{border-color:var(--bdr2);color:var(--w1)}
+.pg-btn.on{background:var(--teal2);border-color:var(--bdr2);color:var(--teal)}
+.per-page{padding:5px 10px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w2);font-size:11px;cursor:pointer;outline:none;font-family:var(--sans)}
+
+/* ── ANALYTICS ── */
+.analytics-panel{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--r2);padding:0;overflow:hidden}
+.ana-header{padding:13px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.ana-body{padding:14px 16px}
+.ana-today{font-size:28px;font-weight:800;color:var(--w1);line-height:1}
+.mini-chart{height:40px;display:flex;align-items:flex-end;gap:3px;margin:10px 0 4px}
+.mc-bar{flex:1;background:var(--teal);border-radius:2px 2px 0 0;opacity:.7;transition:opacity var(--t)}
+.mc-bar:hover{opacity:1}
+.ana-section{margin-top:14px}
+.ana-section-title{font-size:10px;font-weight:600;color:var(--w2);margin-bottom:8px;letter-spacing:.5px}
+.ana-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.ana-bar-label{font-size:11px;color:var(--w2);width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ana-bar-track{flex:1;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.ana-bar-fill{height:100%;border-radius:2px}
+.ana-bar-val{font-family:var(--mono);font-size:10px;color:var(--w3);width:24px;text-align:right;flex-shrink:0}
+.time-sel{padding:4px 9px;background:var(--inp);border:1px solid var(--bdr);border-radius:6px;color:var(--w2);font-size:11px;cursor:pointer;outline:none;font-family:var(--sans)}
+
+/* ── PAGE SYSTEM ── */
+.pg{display:none}.pg.active{display:block}
+
+/* ── SETTINGS PAGE ── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.set-panel{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--r2);padding:18px}
+.set-title{font-size:12px;font-weight:700;color:var(--w2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+.set-row{margin-bottom:12px}
+.set-label{font-size:10px;color:var(--w3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.set-input{width:100%;padding:8px 12px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w1);font-size:12px;font-family:var(--mono);outline:none;transition:border-color var(--t)}
+.set-input:focus{border-color:var(--bdr2)}
+.set-input::placeholder{color:var(--w3)}
+.set-btn{padding:8px 18px;background:var(--teal2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--teal);font-size:12px;font-weight:700;cursor:pointer;transition:var(--t);font-family:var(--sans)}
+.set-btn:hover{background:rgba(0,196,204,.22)}
+.col-tag{display:inline-flex;padding:3px 9px;border-radius:4px;font-family:var(--mono);font-size:10px;background:rgba(0,196,204,.08);border:1px solid var(--bdr2);color:var(--teal);margin:2px}
+.hint{font-size:10px;color:var(--w3);margin-top:6px;line-height:1.6}
+
+/* ── EXPORT PAGE ── */
+.export-grid{display:grid;grid-template-columns:340px 1fr;gap:18px}
+.export-panel{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--r2);padding:18px}
+.exp-title{font-size:12px;font-weight:700;color:var(--w2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+.exp-row{margin-bottom:12px}
+.exp-label{font-size:10px;color:var(--w3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.exp-sel,.exp-in{width:100%;padding:8px 12px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w1);font-size:12px;font-family:inherit;outline:none;transition:border-color var(--t)}
+.exp-sel:focus,.exp-in:focus{border-color:var(--bdr2)}
+.exp-dl-btn{width:100%;padding:11px;background:var(--teal);border:none;border-radius:var(--r);color:#000;font-size:13px;font-weight:700;cursor:pointer;transition:var(--t);margin-top:6px;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:8px}
+.exp-dl-btn:hover{background:#00dde6}
+.preview-table{width:100%;border-collapse:collapse;font-size:11px}
+.preview-table th{padding:7px 10px;background:var(--card);border:1px solid var(--bdr);color:var(--w3);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.preview-table td{padding:7px 10px;border:1px solid var(--bdr);color:var(--w2);font-family:var(--mono);font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── ALL LEADS PAGE ── */
+.full-leads{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--r2);overflow:hidden}
+
+/* ── DUPLICATES PAGE ── */
+.dup-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:14px;margin-bottom:10px;display:flex;gap:14px;align-items:center}
+.dup-field{display:flex;flex-direction:column;gap:2px;flex:1}
+.dup-label{font-size:9px;color:var(--w3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+.dup-val{font-size:12px;color:var(--w1)}
+
+/* ── EDIT MODAL ── */
+.modal-bg{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+.modal-box{background:var(--card);border:1px solid rgba(0,196,204,.2);border-radius:var(--r2);padding:24px;width:600px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 28px 72px rgba(0,0,0,.6)}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{width:28px;height:28px;border-radius:var(--r);border:1px solid var(--bdr);background:transparent;color:var(--w3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:var(--t);font-family:var(--sans)}
+.modal-close:hover{color:var(--rose);border-color:rgba(239,68,68,.3)}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-field{display:flex;flex-direction:column;gap:4px}
+.modal-field.full{grid-column:1/-1}
+.modal-lbl{font-size:9px;color:var(--w3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;font-family:var(--mono)}
+.modal-in{padding:7px 10px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w1);font-size:12px;font-family:var(--mono);outline:none;transition:border-color var(--t);width:100%}
+.modal-in:focus{border-color:var(--bdr2)}
+.modal-btns{display:flex;gap:8px;margin-top:18px}
+.mbtn{flex:1;padding:9px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;transition:var(--t);font-family:var(--sans);border:none}
+.mbtn-cancel{background:rgba(255,255,255,.05);border:1px solid var(--bdr);color:var(--w2)}
+.mbtn-cancel:hover{border-color:var(--bdr2);color:var(--w1)}
+.mbtn-save{background:var(--teal);color:#000}
+.mbtn-save:hover{background:#00dde6}
+.mbtn-approve{background:var(--green);color:#fff}
+.mbtn-approve:hover{background:#1fb55a}
+
+/* ── DUP MODAL ── */
+.dup-modal-bg{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+.dup-modal{background:var(--card);border:1px solid rgba(0,196,204,.2);border-radius:var(--r2);padding:26px;max-width:440px;width:92%;box-shadow:0 28px 72px rgba(0,0,0,.6)}
+.dup-modal h3{font-size:14px;font-weight:700;margin-bottom:8px}
+.dup-modal p{font-size:11px;color:var(--w3);line-height:1.7;margin-bottom:18px;font-family:var(--mono)}
+.dup-modal-btns{display:flex;gap:8px}
+.dup-modal-btns button{flex:1;padding:8px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;transition:var(--t);font-family:var(--sans)}
+
+/* ── TOAST ── */
+#toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{display:flex;align-items:center;gap:9px;padding:10px 15px;border-radius:9px;background:rgba(14,21,38,.98);backdrop-filter:blur(20px);border:1px solid var(--bdr);font-size:11px;color:var(--w1);min-width:220px;max-width:340px;font-family:var(--mono);transform:translateX(110%);opacity:0;transition:all .28s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.toast.in{transform:translateX(0);opacity:1}
+.t-s{border-color:rgba(34,197,94,.2)}.t-s i{color:var(--green)}
+.t-i i{color:var(--teal)}
+.t-w i{color:var(--amber)}
+.t-e{border-color:rgba(239,68,68,.2)}.t-e i{color:var(--rose)}
+
+.hidden{display:none!important}
+.spin-anim{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MOBILE HAMBURGER ── */
+.mob-toggle{display:none;position:fixed;top:14px;left:14px;z-index:100;width:36px;height:36px;border-radius:var(--r);background:var(--card);border:1px solid var(--bdr);color:var(--w1);font-size:16px;cursor:pointer;align-items:center;justify-content:center;transition:var(--t);font-family:var(--sans)}
+.mob-toggle:hover{border-color:var(--bdr2);color:var(--teal)}
+.sidebar-overlay{display:none}
+.sidebar.open{transform:translateX(0)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .mob-toggle{display:flex}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;z-index:90;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+  .sidebar-overlay{display:block;position:fixed;inset:0;z-index:89;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s ease}
+  .sidebar-overlay.show{opacity:1;pointer-events:auto}
+  .shell{position:relative}
+  .topbar{padding:0 14px 0 56px;height:52px}
+  .topbar-left h1{font-size:15px}
+  .topbar-left p{font-size:10px}
+  .topbar-right .top-btn:not(.primary){display:none}
+  .stats-row{grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat-card{padding:10px 12px}
+  .stat-num{font-size:20px}
+  .stat-icon{width:26px;height:26px;font-size:12px}
+  .row2{grid-template-columns:1fr;gap:12px}
+  .preview-grid{grid-template-columns:1fr 1fr}
+  .content{padding:14px 12px}
+  .leads-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  [style*="grid-template-columns:1fr 280px"]{grid-template-columns:1fr!important}
+  [style*="max-height:360px"]{max-height:none!important}
+  .leads-toolbar{gap:6px}
+  .search-wrap{min-width:100px}
+  .filter-sel{font-size:10px;padding:5px 8px}
+  .review-btn,.approve-btn{font-size:10px;padding:5px 10px}
+  .settings-grid,.export-grid{grid-template-columns:1fr}
+  .modal-grid{grid-template-columns:1fr}
+  .modal-box{width:100%;max-width:100vw;max-height:100vh;border-radius:0;padding:16px}
+  .modal-btns{flex-direction:column}
+  .ana-header{flex-direction:column;align-items:start;gap:6px}
+  .dup-card{flex-direction:column;gap:8px}
+  .pagination{flex-direction:column;gap:8px}
+  .pg-btns{flex-wrap:wrap}
+  #toasts{bottom:10px;right:10px}
+  .toast{min-width:auto;max-width:calc(100vw - 20px)}
+}
+
+@media(max-width:540px){
+  .stats-row{grid-template-columns:repeat(2,1fr);gap:6px}
+  .preview-grid{grid-template-columns:1fr}
+  .topbar-right{gap:6px}
+  .topbar-right .top-btn.primary{font-size:10px;padding:5px 10px}
+  .leads-toolbar{flex-direction:column;align-items:stretch}
+  .search-wrap{min-width:auto}
+  .sb-logo{padding:14px 16px}
+  .sb-nav{padding:8px}
+  .leads-table td,.leads-table th{padding:6px 8px;font-size:10px}
+  .dup-modal{padding:18px;max-width:100%;width:94%}
+}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+
+<button class="mob-toggle" id="mobToggle"><i class="fa-solid fa-bars"></i></button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg hidden" id="editModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span><i class="fa-solid fa-pen-to-square" style="color:var(--teal);margin-right:8px"></i>Edit Lead</span>
+      <button class="modal-close" onclick="closeEdit()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-grid">
+      <div class="modal-field"><div class="modal-lbl">Company Name</div><input class="modal-in" id="e_company"></div>
+      <div class="modal-field"><div class="modal-lbl">Contact Person</div><input class="modal-in" id="e_contact"></div>
+      <div class="modal-field"><div class="modal-lbl">Designation</div><input class="modal-in" id="e_desig"></div>
+      <div class="modal-field"><div class="modal-lbl">Mobile</div><input class="modal-in" id="e_mobile"></div>
+      <div class="modal-field"><div class="modal-lbl">Phone</div><input class="modal-in" id="e_phone"></div>
+      <div class="modal-field"><div class="modal-lbl">Email</div><input class="modal-in" id="e_email"></div>
+      <div class="modal-field"><div class="modal-lbl">Website</div><input class="modal-in" id="e_website"></div>
+      <div class="modal-field"><div class="modal-lbl">LinkedIn</div><input class="modal-in" id="e_linkedin"></div>
+      <div class="modal-field"><div class="modal-lbl">GSTIN</div><input class="modal-in" id="e_gstin"></div>
+      <div class="modal-field"><div class="modal-lbl">Industry</div><input class="modal-in" id="e_industry"></div>
+      <div class="modal-field"><div class="modal-lbl">City</div><input class="modal-in" id="e_city"></div>
+      <div class="modal-field"><div class="modal-lbl">State</div><input class="modal-in" id="e_state"></div>
+      <div class="modal-field"><div class="modal-lbl">Country</div><input class="modal-in" id="e_country"></div>
+      <div class="modal-field"><div class="modal-lbl">Postal Code</div><input class="modal-in" id="e_postal"></div>
+      <div class="modal-field full"><div class="modal-lbl">Address</div><input class="modal-in" id="e_address"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-cancel" onclick="closeEdit()">Cancel</button>
+      <button class="mbtn mbtn-approve" onclick="approveFromEdit()"><i class="fa-solid fa-check"></i> Approve & Save</button>
+      <button class="mbtn mbtn-save" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- DUP MODAL -->
+<div class="dup-modal-bg hidden" id="dupModal">
+  <div class="dup-modal">
+    <h3 style="color:var(--amber)"><i class="fa-solid fa-triangle-exclamation" style="margin-right:7px"></i>Duplicate Detected</h3>
+    <p id="dupMsg">A lead with this email or phone already exists in the database.</p>
+    <div class="dup-modal-btns">
+      <button style="background:rgba(255,255,255,.05);border:1px solid var(--bdr);color:var(--w2)" onclick="dupAction('cancel')">Cancel</button>
+      <button style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--amber)" onclick="dupAction('merge')">Merge</button>
+      <button style="background:var(--teal);border:none;color:#000" onclick="dupAction('new')">Save Anyway</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="cosname">COSM<span>OS</span></div>
+    <div class="tagline">Precision Machining Solutions</div>
+    <div class="sub">Lead Intelligence Platform</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-item active" data-page="dashboard"><i class="fa-solid fa-gauge-high"></i>Dashboard</div>
+    <div class="sb-item" data-page="upload"><i class="fa-solid fa-upload"></i>Upload Center</div>
+    <div class="sb-item" data-page="queue"><i class="fa-solid fa-list"></i>Processing Queue<span class="sb-badge" id="queueBadge">0</span></div>
+    <div class="sb-item" data-page="leads"><i class="fa-solid fa-users"></i>All Leads</div>
+    <div class="sb-item" data-page="duplicates"><i class="fa-solid fa-copy"></i>Duplicates<span class="sb-badge orange" id="dupBadge">0</span></div>
+    <div class="sb-item" data-page="export"><i class="fa-solid fa-download"></i>Export Data</div>
+    <div class="sb-item" data-page="settings"><i class="fa-solid fa-gear"></i>Settings</div>
+  </nav>
+  <div class="sb-footer">© 2025 Cosmos Group<br>Lead Intelligence Platform v2.0<br><span style="color:var(--teal);font-size:8px">Powered by Claude AI Vision</span></div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="pageTitle">Cosmos Lead Intelligence Platform</h1>
+      <p id="pageSubtitle">AI-Powered Business Card &amp; Visitor Data Automation</p>
+    </div>
+    <div class="topbar-right">
+      <span id="connectionBadge" style="font-family:var(--mono);font-size:11px;margin-right:12px;font-weight:600;display:flex;align-items:center;gap:6px">○ Standalone mode</span>
+      <button class="top-btn" onclick="switchPage('export')"><i class="fa-solid fa-file-lines"></i>Reports</button>
+      <button class="top-btn primary" onclick="doExport()"><i class="fa-solid fa-download"></i>Export CSV</button>
+    </div>
+  </div>
+
+  <div class="content" id="mainContent">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="pg-dashboard" class="pg active">
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card"><div class="stat-header"><div class="stat-icon" style="background:rgba(59,130,246,.15);color:var(--blue)"><i class="fa-solid fa-folder"></i></div><div class="stat-label">Total Files</div></div><div class="stat-num" id="s-files">0</div><div class="stat-delta" id="sd-files"><i class="fa-solid fa-minus"></i>All time</div></div>
+        <div class="stat-card"><div class="stat-header"><div class="stat-icon" style="background:rgba(0,196,204,.15);color:var(--teal)"><i class="fa-solid fa-id-card"></i></div><div class="stat-label">Cards Processed</div></div><div class="stat-num" id="s-cards">0</div><div class="stat-delta" id="sd-cards"><i class="fa-solid fa-minus"></i>All time</div></div>
+        <div class="stat-card"><div class="stat-header"><div class="stat-icon" style="background:rgba(34,197,94,.15);color:var(--green)"><i class="fa-solid fa-circle-check"></i></div><div class="stat-label">Approved</div></div><div class="stat-num" id="s-approved">0</div><div class="stat-delta"><i class="fa-solid fa-arrow-up"></i>Ready for CRM</div></div>
+        <div class="stat-card"><div class="stat-header"><div class="stat-icon" style="background:rgba(245,158,11,.15);color:var(--amber)"><i class="fa-solid fa-clock-rotate-left"></i></div><div class="stat-label">Pending Review</div></div><div class="stat-num" id="s-pending">0</div><div class="stat-delta" style="color:var(--amber)"><i class="fa-solid fa-clock"></i>Awaiting action</div></div>
+        <div class="stat-card"><div class="stat-header"><div class="stat-icon" style="background:rgba(0,196,204,.15);color:var(--teal)"><i class="fa-solid fa-users"></i></div><div class="stat-label">Total Leads</div></div><div class="stat-num" id="s-leads">0</div><div class="stat-delta"><i class="fa-solid fa-database"></i>In database</div></div>
+        <div class="stat-card"><div class="stat-header"><div class="stat-icon" style="background:rgba(239,68,68,.15);color:var(--rose)"><i class="fa-solid fa-clone"></i></div><div class="stat-label">Duplicates</div></div><div class="stat-num" id="s-dups">0</div><div class="stat-delta down"><i class="fa-solid fa-triangle-exclamation"></i>Detected</div></div>
+      </div>
+
+      <div class="row2">
+        <!-- Upload -->
+        <div class="panel">
+          <div class="panel-hd">
+            <div class="panel-title">Upload Center</div>
+            <div style="display:flex;gap:5px">
+              <div class="fmt-icon fmt-jpg">JPG</div>
+              <div class="fmt-icon fmt-png">PNG</div>
+              <div class="fmt-icon fmt-pdf">PDF</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="dropzone" id="mainDropzone">
+              <div class="dz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+              <div class="dz-title">Drag &amp; Drop card images here</div>
+              <div class="dz-sub">JPG, PNG, PDF supported · Multiple files</div>
+              <button class="dz-btn" id="btnSelectFiles"><i class="fa-solid fa-folder-open"></i>Select Files</button>
+            </div>
+            <input type="file" id="fileInput" multiple accept="image/*,application/pdf" class="upload-hidden">
+            <div style="display:flex;gap:7px;margin-top:8px">
+              <button style="flex:1;padding:7px;background:var(--teal2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--teal);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans)" id="btnProcess" onclick="processAll()">
+                <i class="fa-solid fa-wand-magic-sparkles" style="margin-right:5px"></i>Process All
+              </button>
+              <button style="flex:1;padding:7px;background:var(--green2);border:1px solid rgba(34,197,94,.25);border-radius:var(--r);color:var(--green);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans)" onclick="doExport()">
+                <i class="fa-solid fa-file-csv" style="margin-right:5px"></i>Export CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Queue -->
+        <div class="panel">
+          <div class="panel-hd">
+            <div class="panel-title">Processing Queue</div>
+            <div class="panel-act" onclick="switchPage('queue')">View All</div>
+          </div>
+          <div class="panel-body" id="queuePanel">
+            <div style="text-align:center;padding:28px 0;color:var(--w3);font-size:12px;font-family:var(--mono)" id="queueEmpty">
+              <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;opacity:.3"></i>No files in queue
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="panel">
+          <div class="panel-hd"><div class="panel-title">Quick Preview</div></div>
+          <div class="panel-body">
+            <div class="preview-grid" id="previewGrid">
+              <div class="preview-card"><div class="card-label"><i class="fa-solid fa-id-card" style="font-size:16px;margin-bottom:3px"></i>Upload a card<br>to preview</div></div>
+              <div class="preview-card"><div class="card-label"><i class="fa-solid fa-id-card" style="font-size:16px;margin-bottom:3px;opacity:.4"></i></div></div>
+              <div class="preview-card"><div class="card-label"><i class="fa-solid fa-id-card" style="font-size:16px;margin-bottom:3px;opacity:.2"></i></div></div>
+              <div class="preview-card"><div class="card-label"></div></div>
+              <div class="preview-card"><div class="card-label"></div></div>
+              <div class="preview-more" id="previewMore">+0 more</div>
+            </div>
+            <div class="preview-stat">
+              <span>Total Cards: <strong id="previewCount">0</strong></span>
+              <button class="view-all-btn" onclick="switchPage('leads')">View All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review + Analytics -->
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:14px">
+        <div class="leads-panel">
+          <div class="leads-toolbar">
+            <div class="leads-title">Lead Review <span class="count-badge" id="reviewBadge">0 Leads</span></div>
+            <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" class="search-in" id="dashSearch" placeholder="Search leads…" oninput="filterTable('dashBody',this.value)"></div>
+            <select class="filter-sel" id="dashFilter" onchange="filterByStatus('dashBody',this.value)">
+              <option value="">All Status</option>
+              <option value="Extracted">Extracted</option>
+              <option value="Approved">Approved</option>
+              <option value="Review">Review</option>
+            </select>
+            <button class="approve-btn" onclick="approveAll()">Approve All (<span id="approveCount">0</span>)</button>
+          </div>
+          <div style="overflow-x:auto;max-height:360px;overflow-y:auto">
+            <table class="leads-table">
+              <thead><tr>
+                <th style="width:32px"><input type="checkbox" class="cb" id="selectAllDash" onchange="toggleAll('dashBody',this)"></th>
+                <th>Card</th><th>Contact Person</th><th>Company Name</th>
+                <th>Designation</th><th>Mobile</th><th>Email</th><th>City</th>
+                <th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="dashBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span id="dashPageInfo">No leads yet</span>
+            <div class="pg-btns" id="dashPagination"></div>
+          </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="analytics-panel">
+          <div class="ana-header">
+            <div style="font-size:13px;font-weight:700">Analytics</div>
+            <select class="time-sel" id="anaFilter" onchange="renderAnalytics()">
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="all" selected>All Time</option>
+            </select>
+          </div>
+          <div class="ana-body">
+            <div style="font-size:11px;color:var(--w3);margin-bottom:4px">Total Leads</div>
+            <div class="ana-today" id="anaTotal">0</div>
+            <div class="mini-chart" id="miniChart">
+              <div class="mc-bar" style="height:10%"></div><div class="mc-bar" style="height:20%"></div>
+              <div class="mc-bar" style="height:15%"></div><div class="mc-bar" style="height:40%"></div>
+              <div class="mc-bar" style="height:30%"></div><div class="mc-bar" style="height:60%"></div>
+              <div class="mc-bar" style="height:45%"></div><div class="mc-bar" style="height:100%"></div>
+            </div>
+            <div class="ana-section">
+              <div class="ana-section-title">Top Industries</div>
+              <div id="anaIndustries"></div>
+            </div>
+            <div class="ana-section">
+              <div class="ana-section-title">Top Cities</div>
+              <div id="anaCities"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ UPLOAD PAGE ══ -->
+    <div id="pg-upload" class="pg">
+      <div style="max-width:600px">
+        <div class="set-panel">
+          <div class="set-title">Upload Business Cards</div>
+          <div class="dropzone" id="uploadDropzone" style="margin-top:0">
+            <div class="dz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <div class="dz-title">Drop card images here</div>
+            <div class="dz-sub">JPG, PNG, PDF · Multiple files supported</div>
+            <button class="dz-btn" id="btnSelectFiles2"><i class="fa-solid fa-folder-open"></i>Browse Files</button>
+          </div>
+          <input type="file" id="fileInput2" multiple accept="image/*,application/pdf" class="upload-hidden">
+          <button style="width:100%;padding:11px;background:var(--teal);border:none;border-radius:var(--r);color:#000;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px;font-family:var(--sans)" onclick="processAll()">
+            <i class="fa-solid fa-wand-magic-sparkles" style="margin-right:6px"></i>Process All with Claude AI
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ QUEUE PAGE ══ -->
+    <div id="pg-queue" class="pg">
+      <div class="set-panel">
+        <div class="set-title">Processing Queue</div>
+        <div id="fullQueue">
+          <div style="text-align:center;padding:40px;color:var(--w3);font-family:var(--mono);font-size:12px">
+            <i class="fa-solid fa-inbox" style="font-size:28px;display:block;margin-bottom:10px;opacity:.3"></i>Queue is empty
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ALL LEADS PAGE ══ -->
+    <div id="pg-leads" class="pg">
+      <div class="full-leads">
+        <div class="leads-toolbar">
+          <div class="leads-title">All Leads <span class="count-badge" id="allLeadsBadge">0</span></div>
+          <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" class="search-in" id="allLeadsSearch" placeholder="Search…" oninput="filterTable('allLeadsBody',this.value)"></div>
+          <select class="filter-sel" onchange="filterByStatus('allLeadsBody',this.value)">
+            <option value="">All Status</option>
+            <option value="Extracted">Extracted</option>
+            <option value="Approved">Approved</option>
+          </select>
+          <button class="approve-btn" onclick="approveAll()">Approve All</button>
+          <button class="review-btn" onclick="doExport()"><i class="fa-solid fa-download" style="margin-right:5px"></i>Export</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="leads-table">
+            <thead><tr>
+              <th style="width:32px"><input type="checkbox" class="cb" onchange="toggleAll('allLeadsBody',this)"></th>
+              <th>Card</th><th>Contact Person</th><th>Company Name</th>
+              <th>Designation</th><th>Mobile</th><th>Email</th>
+              <th>City</th><th>State</th><th>GSTIN</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="allLeadsBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="allLeadsInfo">No leads</span>
+          <div class="pg-btns" id="allLeadsPagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DUPLICATES PAGE ══ -->
+    <div id="pg-duplicates" class="pg">
+      <div class="set-panel">
+        <div class="set-title">Duplicate Detection</div>
+        <div id="dupList">
+          <div style="text-align:center;padding:40px;color:var(--w3);font-family:var(--mono);font-size:12px">
+            <i class="fa-solid fa-copy" style="font-size:28px;display:block;margin-bottom:10px;opacity:.3"></i>No duplicates detected
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ EXPORT PAGE ══ -->
+    <div id="pg-export" class="pg">
+      <div class="export-grid">
+        <div class="export-panel">
+          <div class="exp-title">Export to Cosmos CRM</div>
+          <div class="exp-row"><div class="exp-label">Status Filter</div>
+            <select class="exp-sel" id="expStatus">
+              <option value="all">All Leads</option>
+              <option value="Approved">Approved Only</option>
+              <option value="Extracted">Extracted Only</option>
+            </select>
+          </div>
+          <div class="exp-row"><div class="exp-label">Sales Branch</div>
+            <input class="exp-in" id="expBranch" placeholder="e.g. West - Ahmedabad">
+          </div>
+          <div class="exp-row"><div class="exp-label">Assigned To</div>
+            <input class="exp-in" id="expAssigned" placeholder="e.g. Raj Patel">
+          </div>
+          <div class="exp-row"><div class="exp-label">Customer Type</div>
+            <select class="exp-sel" id="expCustType">
+              <option value="Prospect">Prospect</option>
+              <option value="Lead">Lead</option>
+              <option value="Customer">Customer</option>
+            </select>
+          </div>
+          <button class="exp-dl-btn" onclick="doExport()">
+            <i class="fa-solid fa-file-csv"></i>Download Cosmos CSV
+          </button>
+          <div style="font-size:10px;color:var(--w3);margin-top:8px;line-height:1.6">Timestamped filename · append-only · multiple contacts expanded to rows</div>
+        </div>
+        <div class="export-panel">
+          <div class="exp-title">Column Preview (23 Cosmos CRM Columns)</div>
+          <div style="overflow-x:auto">
+            <table class="preview-table" id="previewTableEl">
+              <thead><tr id="previewCols"></tr></thead>
+              <tbody id="previewRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS PAGE ══ -->
+    <div id="pg-settings" class="pg">
+      <div class="settings-grid">
+        <div>
+          <div class="set-panel" style="margin-bottom:14px">
+            <div class="set-title">Claude API Key</div>
+            <div class="set-row"><div class="set-label">API Key</div>
+              <input class="set-input" id="settApiKey" type="password" placeholder="sk-ant-api03-...">
+            </div>
+            <div class="hint">Stored in browser localStorage only. Never sent to any server other than Anthropic. Never committed to source code.</div>
+            <button class="set-btn" style="margin-top:10px" onclick="saveDefaults()">Save Key</button>
+          </div>
+          <div class="set-panel" style="margin-bottom:14px">
+            <div class="set-title">Backend Connection</div>
+            <div class="set-row"><div class="set-label">Backend API URL</div>
+              <input class="set-input" id="settBackendUrl" placeholder="http://localhost:4000">
+            </div>
+            <div class="hint">Enter the URL of your hosted Node.js backend (e.g., https://cosmos-backend.onrender.com). Leave empty to reset to localhost.</div>
+            <button class="set-btn" style="margin-top:10px" onclick="saveBackendUrl()">Save Backend URL</button>
+          </div>
+          <div class="set-panel" style="margin-bottom:14px" id="settAuthPanel">
+            <div class="set-title">Backend Authentication</div>
+            <div id="authLoggedOut">
+              <div class="set-row"><div class="set-label">Email Address</div>
+                <input class="set-input" id="settEmail" placeholder="admin@cosmos.local">
+              </div>
+              <div class="set-row"><div class="set-label">Password</div>
+                <input class="set-input" id="settPassword" type="password" placeholder="••••••••">
+              </div>
+              <button class="set-btn" style="margin-top:10px" onclick="doLogin()">Login to Backend</button>
+            </div>
+            <div id="authLoggedIn" class="hidden">
+              <div class="hint" style="margin-bottom:10px;font-weight:600" id="loggedInUserMsg">Logged in as admin@cosmos.local</div>
+              <button class="set-btn" style="background:var(--rose2);border-color:rgba(239,68,68,.3);color:var(--rose)" onclick="doLogout()">Logout</button>
+            </div>
+          </div>
+          <div class="set-panel">
+            <div class="set-title">Export Defaults</div>
+            <div class="set-row"><div class="set-label">Default Sales Branch</div>
+              <input class="set-input" id="settBranch" placeholder="e.g. West - Ahmedabad">
+            </div>
+            <div class="set-row"><div class="set-label">Default Assigned To</div>
+              <input class="set-input" id="settAssigned" placeholder="e.g. Raj Patel">
+            </div>
+            <button class="set-btn" onclick="saveDefaults()">Save Defaults</button>
+          </div>
+        </div>
+        <div class="set-panel">
+          <div class="set-title">Cosmos CRM Column Order</div>
+          <div id="colPreview" style="line-height:2.2"></div>
+          <div class="hint" style="margin-top:10px">These 23 columns are written in exact order to the exported CSV for direct import into Cosmos CRM.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <div style="text-align:center;padding:7px;border-top:1px solid var(--bdr);background:var(--sidebar);font-family:var(--mono);font-size:9px;color:var(--teal);flex-shrink:0">
+    Cosmos Lead Intelligence Platform v2.0 · Powered by Claude AI Vision
+  </div>
+</div>
+</div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════════ */
+const COSMOS_COLS = [
+  'Company Name','SAP Customer Code','Website','Email','Phone',
+  'Account Status','Customer Type','Industry','Sales Branch','Rating',
+  'City','State','GSTIN','Assigned To','Created At','Updated At',
+  'Contact Person','Designation','Mobile','Address','Country',
+  'Postal Code','LinkedIn'
+];
+
+const FIELD_MAP = {
+  'Company Name':      l => l.company||l.companyName||'',
+  'SAP Customer Code': ()=> '',
+  'Website':           l => l.website||'',
+  'Email':             (l,c) => c.email||l.email||'',
+  'Phone':             (l,c) => c.phone||l.phonePrimary||'',
+  'Account Status':    l => l.accountStatus||'New Lead',
+  'Customer Type':     l => l.customerType||'Prospect',
+  'Industry':          l => l.industry||'',
+  'Sales Branch':      l => l.salesBranch||S.defaults.salesBranch||'',
+  'Rating':            ()=> '',
+  'City':              l => l.city||'',
+  'State':             l => l.state||'',
+  'GSTIN':             l => l.gstin||'',
+  'Assigned To':       l => l.assignedTo||S.defaults.assignedTo||'',
+  'Created At':        l => l.createdAt||now(),
+  'Updated At':        l => l.updatedAt||now(),
+  'Contact Person':    (l,c) => c.name||c.fullName||'',
+  'Designation':       (l,c) => c.designation||'',
+  'Mobile':            (l,c) => c.mobile||c.phone||l.phoneSecondary||'',
+  'Address':           l => l.address||'',
+  'Country':           l => l.country||'',
+  'Postal Code':       l => l.postalCode||'',
+  'LinkedIn':          l => l.linkedin||'',
+};
+
+/* ══════════════════════════════════════════════════════════
+   BACKEND API CLIENT
+   Connects to Node.js backend at BACKEND_URL.
+   Falls back to standalone (IndexedDB only) if backend is unreachable.
+══════════════════════════════════════════════════════════ */
+const PROD_BACKEND = 'https://cosmos-backend-zqap.onrender.com';
+const DEV_BACKEND  = 'http://localhost:4000';
+const saved = localStorage.getItem('cosmos_backend_url');
+let BACKEND_URL;
+if (saved && saved !== DEV_BACKEND) {
+  BACKEND_URL = saved;
+} else if (window.location.hostname === 'cosmos-lip.vercel.app') {
+  BACKEND_URL = PROD_BACKEND;
+} else {
+  BACKEND_URL = DEV_BACKEND;
+}
+let AUTH_TOKEN = localStorage.getItem('cosmos_auth_token') || null;
+
+const API = {
+  _headers() {
+    const h = { 'Content-Type': 'application/json' };
+    if (AUTH_TOKEN) h['Authorization'] = `Bearer ${AUTH_TOKEN}`;
+    return h;
+  },
+
+  async login(email, password) {
+    const r = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Login failed');
+    AUTH_TOKEN = data.token;
+    localStorage.setItem('cosmos_auth_token', AUTH_TOKEN);
+    return data;
+  },
+
+  async me() {
+    const r = await fetch(`${BACKEND_URL}/api/auth/me`, { headers: this._headers() });
+    if (!r.ok) return null;
+    return r.json();
+  },
+
+  async uploadFiles(files, source) {
+    const form = new FormData();
+    for (const f of files) form.append('files', f);
+    if (source) form.append('source', source);
+    const h = {};
+    if (AUTH_TOKEN) h['Authorization'] = `Bearer ${AUTH_TOKEN}`;
+    const r = await fetch(`${BACKEND_URL}/api/upload`, { method: 'POST', headers: h, body: form });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Upload failed');
+    return data;
+  },
+
+  async getLeads(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const r = await fetch(`${BACKEND_URL}/api/leads${qs ? '?' + qs : ''}`, { headers: this._headers() });
+    if (!r.ok) throw new Error('Failed to fetch leads');
+    return r.json();
+  },
+
+  async approveLead(id) {
+    const r = await fetch(`${BACKEND_URL}/api/leads/${id}/approve`, { method: 'POST', headers: this._headers() });
+    if (!r.ok) throw new Error('Approve failed');
+    return r.json();
+  },
+
+  async rejectLead(id) {
+    const r = await fetch(`${BACKEND_URL}/api/leads/${id}/reject`, { method: 'POST', headers: this._headers() });
+    if (!r.ok) throw new Error('Reject failed');
+    return r.json();
+  },
+
+  async updateLead(id, fields) {
+    const r = await fetch(`${BACKEND_URL}/api/leads/${id}`, {
+      method: 'PUT', headers: this._headers(), body: JSON.stringify(fields),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Update failed');
+    return data;
+  },
+
+  async getDashboard() {
+    const r = await fetch(`${BACKEND_URL}/api/analytics`, { headers: this._headers() });
+    if (!r.ok) throw new Error('Analytics unavailable');
+    return r.json();
+  },
+
+  async exportCSV(source) {
+    const qs = source ? `?source=${encodeURIComponent(source)}` : '';
+    const r = await fetch(`${BACKEND_URL}/api/export/csv${qs}`, { headers: this._headers() });
+    if (!r.ok) throw new Error('Export failed');
+    return r.blob();
+  },
+
+  async checkHealth(timeoutMs = 8000) {
+    try {
+      const r = await fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(timeoutMs) });
+      return r.ok;
+    } catch { return false; }
+  },
+};
+
+// ── Backend connection state ────────────────────────────────────────────────
+let BACKEND_ONLINE = false;
+
+async function initBackendConnection() {
+  // Fire warm-up request to trigger Render cold start, then retry health check
+  fetch(`${BACKEND_URL}/health`).catch(() => {});
+  for (let i = 0; i < 5; i++) {
+    BACKEND_ONLINE = await API.checkHealth(i === 0 ? 15000 : 8000);
+    if (BACKEND_ONLINE) break;
+    if (i < 4) await new Promise(r => setTimeout(r, 3000));
+  }
+  if (!BACKEND_ONLINE) {
+    // Keep polling in background in case Render is still cold-starting
+    (function poll() {
+      setTimeout(async () => {
+        if (BACKEND_ONLINE) return;
+        BACKEND_ONLINE = await API.checkHealth(15000);
+        if (BACKEND_ONLINE) { updateConnectionBadge(); loadLeads(); return; }
+        poll();
+      }, 10000);
+    })();
+  }
+  // Token validation is optional — read/upload work without auth
+  if (BACKEND_ONLINE && AUTH_TOKEN) {
+    const user = await API.me().catch(() => null);
+    if (user) {
+      S.currentUser = user;
+    } else {
+      AUTH_TOKEN = null;
+      localStorage.removeItem('cosmos_auth_token');
+    }
+  }
+  updateConnectionBadge();
+}
+
+function updateConnectionBadge() {
+  const badge = document.getElementById('connectionBadge');
+  if (!badge) return;
+  if (BACKEND_ONLINE) {
+    badge.textContent = '● Connected' + (AUTH_TOKEN ? '' : ' (read-only)');
+    badge.style.color = AUTH_TOKEN ? 'var(--green)' : 'var(--amber)';
+  } else {
+    badge.textContent = '○ Standalone mode';
+    badge.style.color = 'var(--w3)';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   CLAUDE API KEY — stored in localStorage via Settings page
+══════════════════════════════════════════════════════════ */
+// Set your Claude API key in Settings (stored in localStorage — never committed to source control)
+const CLAUDE_API_KEY = localStorage.getItem('cosmos_claude_api_key') || '';
+
+/* ══════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════ */
+const S = {
+  leads: [],
+  queue: [],
+  duplicates: [],
+  editId: null,
+  dupPending: null,
+  currentUser: null,
+  defaults: JSON.parse(localStorage.getItem('cosmos_defaults')||'{}'),
+  page: { dash: 1, all: 1 },
+  perPage: 10,
+};
+
+/* ══════════════════════════════════════════════════════════
+   INDEXEDDB
+══════════════════════════════════════════════════════════ */
+const IDB = (() => {
+  let _db = null;
+  const open = () => new Promise((res,rej) => {
+    if (_db) return res(_db);
+    const req = indexedDB.open('CosmosLIP', 2);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('leads')) db.createObjectStore('leads', {keyPath:'_id'});
+    };
+    req.onsuccess = e => { _db = e.target.result; res(_db); };
+    req.onerror = e => rej(e.target.error);
+  });
+  const all = () => open().then(db => new Promise((res,rej) => {
+    const req = db.transaction('leads','readonly').objectStore('leads').getAll();
+    req.onsuccess = e => res(e.target.result||[]);
+    req.onerror = e => rej(e.target.error);
+  }));
+  const put = l => open().then(db => new Promise((res,rej) => {
+    const req = db.transaction('leads','readwrite').objectStore('leads').put(l);
+    req.onsuccess = () => res(true); req.onerror = e => rej(e.target.error);
+  }));
+  const del = id => open().then(db => new Promise((res,rej) => {
+    const req = db.transaction('leads','readwrite').objectStore('leads').delete(id);
+    req.onsuccess = () => res(true); req.onerror = e => rej(e.target.error);
+  }));
+  return { all, put, del };
+})();
+
+async function loadLeads() {
+  try {
+    if (BACKEND_ONLINE) {
+      // Load from PostgreSQL via backend API
+      const result = await API.getLeads({ take: 200, skip: 0 });
+      // Normalize backend leads to be compatible with local lead shape
+      S.leads = (result.items || []).map(l => ({
+        ...l,
+        _id: l.id,
+        company: l.companyName,
+        contactName: l.contacts?.find(c => c.isPrimary)?.fullName || null,
+        designation: l.contacts?.find(c => c.isPrimary)?.designation || null,
+        mobile: l.contacts?.find(c => c.isPrimary)?.mobile || null,
+        phone: l.contacts?.find(c => c.isPrimary)?.phone || null,
+        email: l.contacts?.find(c => c.isPrimary)?.email || l.email,
+        status: l.status === 'PENDING_REVIEW' ? 'Extracted'
+              : l.status === 'APPROVED' ? 'Approved'
+              : l.status === 'REJECTED' ? 'Rejected'
+              : l.status,
+        thumbDataUrl: null,
+      }));
+    } else {
+      // Standalone mode: load from IndexedDB
+      S.leads = await IDB.all();
+    }
+  } catch (e) {
+    console.warn('loadLeads error:', e.message);
+    S.leads = await IDB.all().catch(() => []);
+  }
+  renderAll();
+}
+async function persistLead(lead) {
+  await IDB.put(lead);
+  const i = S.leads.findIndex(l => l._id === lead._id);
+  if (i >= 0) S.leads[i] = lead; else S.leads.unshift(lead);
+}
+async function deleteLead(id) {
+  if (BACKEND_ONLINE) {
+    try {
+      await fetch(`${BACKEND_URL}/api/leads/${id}`, { method: 'DELETE' });
+    } catch (_) {}
+  }
+  await IDB.del(id);
+  S.leads = S.leads.filter(l => l._id !== id);
+  renderAll();
+}
+
+/* ══════════════════════════════════════════════════════════
+   CLAUDE VISION API
+══════════════════════════════════════════════════════════ */
+const VISION_PROMPT = `You are a Business Card Data Extraction Engine for an industrial CRM.
+Extract ALL information visible on this business card image.
+Return ONLY a valid JSON object — no explanation, no markdown.
+
+{
+  "company": "string or null",
+  "website": "URL without http:// or www. — string or null",
+  "gstin": "Indian GST number e.g. 24ABCDE1234F1Z5 — string or null",
+  "address": "full street address — string or null",
+  "city": "string or null",
+  "state": "full state name — derive from GSTIN first 2 digits: 24=Gujarat 27=Maharashtra 29=Karnataka 33=TamilNadu 07=Delhi 36=Telangana 09=UttarPradesh 08=Rajasthan — string or null",
+  "country": "string or null — default India if +91 number or GSTIN",
+  "postalCode": "PIN/postal code — string or null",
+  "linkedin": "LinkedIn URL or handle — string or null",
+  "industry": "industry sector e.g. Manufacturing, Engineering, Automotive — string or null",
+  "contacts": [
+    {
+      "name": "person full name — string or null",
+      "designation": "job title — string or null",
+      "email": "string or null",
+      "phone": "office/direct phone with country code — string or null",
+      "mobile": "mobile/cell number with country code — string or null",
+      "isPrimary": true
+    }
+  ],
+  "confidence": 85
+}
+
+Rules:
+- List every person found on the card in contacts[]
+- First/main person is isPrimary: true, others false
+- Confidence 0-100 integer based on image clarity
+- Never invent data not visible on the card`;
+
+async function callClaudeVision(dataUrl, apiKey) {
+  const m = dataUrl.match(/^data:(.+);base64,(.+)$/);
+  if (!m) throw new Error('Invalid image data');
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5',
+      max_tokens: 1500,
+      messages: [{
+        role: 'user',
+        content: [
+          { type:'image', source:{ type:'base64', media_type:m[1], data:m[2] } },
+          { type:'text', text: VISION_PROMPT }
+        ]
+      }]
+    })
+  });
+  if (!resp.ok) {
+    const e = await resp.json().catch(()=>({}));
+    if (resp.status === 401) throw new Error('Invalid API key. Update it in Settings.');
+    throw new Error(e.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  const text = (data.content||[]).map(b=>b.text||'').join('');
+  const jm = text.match(/\{[\s\S]*\}/);
+  if (!jm) throw new Error('No JSON in Claude response');
+  const parsed = JSON.parse(jm[0]);
+  if (!Array.isArray(parsed.contacts)) parsed.contacts = [];
+  if (!parsed.contacts.length) parsed.contacts = [{ name:null, designation:null, email:null, phone:null, mobile:null, isPrimary:true }];
+  return parsed;
+}
+
+/* ══════════════════════════════════════════════════════════
+   QUEUE & PROCESSING
+══════════════════════════════════════════════════════════ */
+function addFilesToQueue(files) {
+  const allowed = ['image/jpeg','image/jpg','image/png','image/webp','image/gif','image/bmp','application/pdf'];
+  let added = 0;
+  for (const f of files) {
+    if (!allowed.includes(f.type)) continue;
+    const reader = new FileReader();
+    // Store the original File reference so we can POST it to the backend
+    const fileRef = f;
+    reader.onload = e => {
+      S.queue.push({
+        id: 'q'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+        name: f.name, type: f.type,
+        dataUrl: e.target.result,
+        fileRef,   // original File object for backend upload
+        status: 'pending', progress: 0, error: null,
+      });
+      renderQueue(); updateStats();
+    };
+    reader.readAsDataURL(f);
+    added++;
+  }
+  if (added) toast(`${added} file(s) added to queue`, 's');
+}
+
+async function processAll() {
+  const pending = S.queue.filter(i => i.status === 'pending');
+  if (!pending.length) { toast('No pending files in queue', 'w'); return; }
+
+  // ── Backend mode: POST files directly to Node/OCR pipeline ──────────────
+  if (BACKEND_ONLINE) {
+    toast(`Sending ${pending.length} file(s) to backend OCR pipeline…`, 'i', 5000);
+    const fileObjects = pending.map(i => i.fileRef).filter(Boolean);
+    if (fileObjects.length) {
+      try {
+        pending.forEach(i => { i.status = 'running'; i.progress = 30; });
+        renderQueue();
+        const source = S.defaults.eventSource || '';
+        const result = await API.uploadFiles(fileObjects, source);
+        pending.forEach(i => { i.status = 'done'; i.progress = 100; });
+        renderQueue();
+        toast(`${result.queued?.length || fileObjects.length} file(s) queued for OCR. Leads will appear after processing.`, 's', 6000);
+        // Poll for processed leads — OCR pipeline takes ~60s per image on Render
+        let _polls = 0;
+        (function pollLeads() {
+          setTimeout(async () => {
+            await loadLeads();
+            if (++_polls < 15) pollLeads(); // keep polling for ~2 min
+            renderAll(); updateStats();
+          }, 8000);
+        })();
+        renderAll(); updateStats();
+        return;
+      } catch (e) {
+        pending.forEach(i => { i.status = 'pending'; i.progress = 0; });
+        toast(`Backend upload failed (${e.message}) — falling back to Claude Vision mode`, 'w');
+      }
+    }
+  }
+
+  // ── Standalone mode: Claude Vision API in browser ────────────────────────
+  const apiKey = localStorage.getItem('cosmos_claude_api_key') || CLAUDE_API_KEY;
+  if (!apiKey || apiKey.includes('YOUR_KEY') || !apiKey.trim()) {
+    toast('Set your Claude API key in Settings first', 'e');
+    return;
+  }
+  toast(`Processing ${pending.length} file(s) with Claude Vision…`, 'i', 5000);
+
+  for (const item of pending) {
+    item.status = 'running'; item.progress = 20;
+    renderQueue();
+    try {
+      const ai = await callClaudeVision(item.dataUrl, apiKey);
+      item.status = 'done'; item.progress = 100;
+      // Create a lead for each contact on the card
+      for (const contact of ai.contacts) {
+        const lead = {
+          _id: 'l'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+          company: ai.company, website: ai.website, gstin: ai.gstin,
+          address: ai.address, city: ai.city, state: ai.state,
+          country: ai.country||'India', postalCode: ai.postalCode,
+          linkedin: ai.linkedin, industry: ai.industry,
+          email: contact.email, phone: contact.phone,
+          contactName: contact.name, designation: contact.designation, mobile: contact.mobile,
+          contacts: ai.contacts,
+          confidence: ai.confidence||0,
+          status: 'Extracted',
+          sourceFile: item.name,
+          accountStatus: 'New Lead',
+          customerType: 'Prospect',
+          salesBranch: S.defaults.salesBranch||'',
+          assignedTo: S.defaults.assignedTo||'',
+          createdAt: now(), updatedAt: now(),
+          thumbDataUrl: item.type.startsWith('image/') ? item.dataUrl : null,
+        };
+        // Duplicate check (standalone mode)
+        const dup = S.leads.find(l =>
+          (lead.email && l.email && lead.email.toLowerCase() === l.email.toLowerCase()) ||
+          (lead.mobile && l.mobile && lead.mobile === l.mobile)
+        );
+        if (dup) {
+          S.duplicates.push({ a: dup._id, b: lead._id, lead });
+        } else {
+          await persistLead(lead);
+          injectPreview(item);
+        }
+      }
+    } catch(err) {
+      item.status = 'fail'; item.error = err.message;
+      toast(`Error: ${err.message}`, 'e');
+    }
+    renderQueue(); updateStats();
+  }
+  toast(`Done! ${S.leads.filter(l=>l.status==='Extracted').length} extracted leads ready for review.`, 's');
+  renderAll();
+}
+
+/* ══════════════════════════════════════════════════════════
+   LEAD OPERATIONS
+══════════════════════════════════════════════════════════ */
+async function approveLead(id) {
+  const lead = S.leads.find(l => l._id === id);
+  if (!lead) return;
+  try {
+    if (BACKEND_ONLINE && AUTH_TOKEN) {
+      await API.approveLead(id);
+    }
+    lead.status = 'Approved'; lead.updatedAt = now();
+    await persistLead(lead);
+    renderAll(); updateStats();
+    toast('Lead approved', 's');
+  } catch(e) {
+    toast('Approve failed: ' + e.message, 'e');
+  }
+}
+
+async function approveAll() {
+  const pending = S.leads.filter(l => l.status === 'Extracted' || l.status === 'PENDING_REVIEW');
+  if (!pending.length) { toast('No extracted leads to approve', 'w'); return; }
+  try {
+    if (BACKEND_ONLINE && AUTH_TOKEN) {
+      const ids = pending.map(l => l._id || l.id).filter(Boolean);
+      await fetch(`${BACKEND_URL}/api/leads/approve`, {
+        method: 'POST',
+        headers: API._headers(),
+        body: JSON.stringify({ ids }),
+      });
+    }
+    for (const l of pending) { l.status = 'Approved'; l.updatedAt = now(); await persistLead(l); }
+    toast(`${pending.length} leads approved!`, 's');
+    renderAll(); updateStats();
+  } catch(e) {
+    toast('Approve all failed: ' + e.message, 'e');
+  }
+}
+
+function openEdit(id) {
+  const lead = S.leads.find(l => l._id === id);
+  if (!lead) return;
+  S.editId = id;
+  document.getElementById('e_company').value  = lead.company||'';
+  document.getElementById('e_contact').value  = lead.contactName||'';
+  document.getElementById('e_desig').value    = lead.designation||'';
+  document.getElementById('e_mobile').value   = lead.mobile||'';
+  document.getElementById('e_phone').value    = lead.phone||'';
+  document.getElementById('e_email').value    = lead.email||'';
+  document.getElementById('e_website').value  = lead.website||'';
+  document.getElementById('e_linkedin').value = lead.linkedin||'';
+  document.getElementById('e_gstin').value    = lead.gstin||'';
+  document.getElementById('e_industry').value = lead.industry||'';
+  document.getElementById('e_city').value     = lead.city||'';
+  document.getElementById('e_state').value    = lead.state||'';
+  document.getElementById('e_country').value  = lead.country||'';
+  document.getElementById('e_postal').value   = lead.postalCode||'';
+  document.getElementById('e_address').value  = lead.address||'';
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEdit() { document.getElementById('editModal').classList.add('hidden'); S.editId = null; }
+
+async function saveEdit() {
+  if (!S.editId) return;
+  const lead = S.leads.find(l => l._id === S.editId);
+  if (!lead) return;
+  lead.company     = g('e_company'); lead.contactName = g('e_contact');
+  lead.designation = g('e_desig');   lead.mobile      = g('e_mobile');
+  lead.phone       = g('e_phone');   lead.email       = g('e_email');
+  lead.website     = g('e_website'); lead.linkedin    = g('e_linkedin');
+  lead.gstin       = g('e_gstin');   lead.industry    = g('e_industry');
+  lead.city        = g('e_city');    lead.state       = g('e_state');
+  lead.country     = g('e_country'); lead.postalCode  = g('e_postal');
+  lead.address     = g('e_address'); lead.updatedAt   = now();
+  await persistLead(lead);
+  closeEdit(); renderAll(); toast('Lead updated', 's');
+}
+
+async function approveFromEdit() {
+  await saveEdit();
+  if (S.editId) { await approveLead(S.editId); } else { const last = S.leads[0]; if(last) await approveLead(last._id); }
+  closeEdit();
+}
+
+const g = id => document.getElementById(id)?.value?.trim()||'';
+
+/* ══════════════════════════════════════════════════════════
+   EXPORT
+══════════════════════════════════════════════════════════ */
+function buildCosmosRows(statusFilter) {
+  const rows = [];
+  const filtered = statusFilter && statusFilter !== 'all'
+    ? S.leads.filter(l => l.status === statusFilter)
+    : S.leads;
+  const branch = g('expBranch') || S.defaults.salesBranch || '';
+  const assigned = g('expAssigned') || S.defaults.assignedTo || '';
+  const custType = document.getElementById('expCustType')?.value || 'Prospect';
+
+  for (const lead of filtered) {
+    const contacts = lead.contacts?.length ? lead.contacts : [{ name: lead.contactName, designation: lead.designation, email: lead.email, phone: lead.phone, mobile: lead.mobile, isPrimary: true }];
+    for (const contact of contacts) {
+      const row = {};
+      for (const col of COSMOS_COLS) row[col] = FIELD_MAP[col](lead, contact)||'';
+      if (branch) row['Sales Branch'] = branch;
+      if (assigned) row['Assigned To'] = assigned;
+      row['Customer Type'] = custType;
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function doExport() {
+  if (BACKEND_ONLINE) {
+    window.location.href = `${BACKEND_URL}/api/export/csv`;
+    toast('Downloading CSV…', 's');
+    return;
+  }
+  const statusFilter = document.getElementById('expStatus')?.value || 'all';
+  const rows = buildCosmosRows(statusFilter);
+  if (!rows.length) { toast('No leads to export', 'w'); return; }
+  const esc = v => { const s = v==null?'':String(v); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+  const csv = '\uFEFF' + [COSMOS_COLS.map(esc).join(','), ...rows.map(r => COSMOS_COLS.map(c => esc(r[c])).join(','))].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = `cosmos_leads_${new Date().toISOString().slice(0,10)}_${Date.now()}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast(`${rows.length} rows exported to CSV`, 's');
+}
+
+/* ══════════════════════════════════════════════════════════
+   RENDERING
+══════════════════════════════════════════════════════════ */
+function renderAll() {
+  renderTable('dashBody', S.page.dash);
+  renderTable('allLeadsBody', S.page.all);
+  renderAnalytics();
+  renderDuplicates();
+  renderExportPreview();
+  updateStats();
+}
+
+function renderTable(tbodyId, page = 1) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const leads = [...S.leads].reverse();
+  const start = (page-1) * S.perPage;
+  const slice = leads.slice(start, start + S.perPage);
+  const isDash = tbodyId === 'dashBody';
+
+  tbody.innerHTML = slice.map(lead => {
+    const statusClass = lead.status==='Approved' ? 'st-approved' : lead.status==='Rejected' ? 'st-rejected' : 'st-extracted';
+    const conf = lead.confidence ? `<span style="font-family:var(--mono);font-size:10px;color:${lead.confidence>=80?'var(--green)':lead.confidence>=60?'var(--amber)':'var(--rose)'}">${lead.confidence}%</span>` : '';
+    const thumb = lead.thumbDataUrl
+      ? `<div class="card-thumb"><img src="${lead.thumbDataUrl}" alt="card"></div>`
+      : `<div class="card-thumb"><i class="fa-solid fa-id-card" style="font-size:12px"></i></div>`;
+    const extraCols = isDash ? '' : `<td title="${esc(lead.state)}">${esc(lead.state)||'—'}</td><td style="font-family:var(--mono);font-size:10px" title="${esc(lead.gstin)}">${esc(lead.gstin)||'—'}</td>`;
+    return `<tr>
+      <td><input type="checkbox" class="cb" data-id="${lead._id}"></td>
+      <td>${thumb}</td>
+      <td>${esc(lead.contactName)||'—'} ${conf}</td>
+      <td title="${esc(lead.company)}">${esc(lead.company)||'—'}</td>
+      <td title="${esc(lead.designation)}">${esc(lead.designation)||'—'}</td>
+      <td style="font-family:var(--mono)">${esc(lead.mobile||lead.phone)||'—'}</td>
+      <td style="color:var(--teal);font-family:var(--mono);font-size:11px" title="${esc(lead.email)}">${esc(lead.email)||'—'}</td>
+      <td>${esc(lead.city)||'—'}</td>
+      ${extraCols}
+      <td><span class="status-badge ${statusClass}">${lead.status}</span></td>
+      <td><div class="action-btns">
+        <button class="act-btn" title="Edit" onclick="openEdit('${lead._id}')"><i class="fa-solid fa-pen"></i></button>
+        ${lead.status!=='Approved'?`<button class="act-btn apv" title="Approve" onclick="approveLead('${lead._id}')"><i class="fa-solid fa-check"></i></button>`:''}
+        <button class="act-btn del" title="Delete" onclick="confirmDelete('${lead._id}')"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  // Update counts
+  const total = S.leads.length;
+  const pages = Math.ceil(total / S.perPage);
+  if (tbodyId === 'dashBody') {
+    document.getElementById('reviewBadge').textContent = total + ' Leads';
+    document.getElementById('approveCount').textContent = S.leads.filter(l=>l.status!=='Approved').length;
+    document.getElementById('dashPageInfo').textContent = total ? `Showing ${start+1}–${Math.min(start+S.perPage,total)} of ${total}` : 'No leads yet';
+    renderPagination('dashPagination', page, pages, p => { S.page.dash=p; renderTable('dashBody',p); });
+  } else {
+    document.getElementById('allLeadsBadge').textContent = total;
+    document.getElementById('allLeadsInfo').textContent = total ? `Showing ${start+1}–${Math.min(start+S.perPage,total)} of ${total}` : 'No leads';
+    renderPagination('allLeadsPagination', page, pages, p => { S.page.all=p; renderTable('allLeadsBody',p); });
+  }
+}
+
+function renderPagination(containerId, current, total, onClick) {
+  const el = document.getElementById(containerId);
+  if (!el || total <= 1) { if(el) el.innerHTML=''; return; }
+  let html = `<button class="pg-btn" ${current===1?'disabled':''} onclick="(${onClick.toString()})(${current-1})"><i class="fa-solid fa-chevron-left"></i></button>`;
+  for (let i = 1; i <= Math.min(total,5); i++) html += `<button class="pg-btn${i===current?' on':''}" onclick="(${onClick.toString()})(${i})">${i}</button>`;
+  if (total > 5) html += `<span style="color:var(--w3);padding:0 4px">…</span><button class="pg-btn${total===current?' on':''}" onclick="(${onClick.toString()})(${total})">${total}</button>`;
+  html += `<button class="pg-btn" ${current===total?'disabled':''} onclick="(${onClick.toString()})(${current+1})"><i class="fa-solid fa-chevron-right"></i></button>`;
+  el.innerHTML = html;
+}
+
+function renderQueue() {
+  const panel = document.getElementById('queuePanel');
+  const empty = document.getElementById('queueEmpty');
+  const fullQ = document.getElementById('fullQueue');
+  const pending = S.queue.filter(i=>i.status==='pending').length;
+  document.getElementById('queueBadge').textContent = pending;
+
+  if (!S.queue.length) { if(empty) empty.style.display='block'; if(panel) panel.innerHTML='<div style="text-align:center;padding:28px 0;color:var(--w3);font-size:12px;font-family:var(--mono)" id="queueEmpty"><i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;opacity:.3"></i>No files in queue</div>'; return; }
+  if(empty) empty.style.display='none';
+
+  const renderItems = items => items.slice(-5).reverse().map(item => {
+    const isPdf = item.type==='application/pdf';
+    const pct = item.status==='done'?100:item.status==='fail'?0:item.progress||20;
+    const fillColor = item.status==='done'?'var(--green)':item.status==='fail'?'var(--rose)':'var(--teal)';
+    const statusEl = item.status==='done' ? `<div class="qi-status qi-done"><i class="fa-solid fa-check"></i></div>`
+                   : item.status==='fail' ? `<div class="qi-status qi-fail" title="${item.error||''}"><i class="fa-solid fa-xmark"></i></div>`
+                   : item.status==='running' ? `<div class="qi-status qi-spin"><i class="fa-solid fa-circle-notch spin-anim"></i></div>` : '';
+    return `<div class="queue-item">
+      <div class="qi-icon ${isPdf?'qi-pdf':'qi-jpg'}"><i class="fa-solid ${isPdf?'fa-file-pdf':'fa-image'}"></i></div>
+      <div class="qi-info">
+        <div class="qi-name">${esc(item.name)}</div>
+        <div class="qi-meta">${isPdf?'PDF':'Image'} · ${item.status}</div>
+        <div class="qi-prog"><div class="qi-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+      </div>
+      <div class="qi-right"><span class="qi-pct">${pct}%</span>${statusEl}</div>
+    </div>`;
+  }).join('');
+
+  if (panel) panel.innerHTML = renderItems(S.queue);
+  if (fullQ) fullQ.innerHTML = S.queue.length ? renderItems(S.queue) : '<div style="text-align:center;padding:40px;color:var(--w3);font-size:12px;font-family:var(--mono)"><i class="fa-solid fa-inbox" style="font-size:28px;display:block;margin-bottom:10px;opacity:.3"></i>Queue is empty</div>';
+}
+
+function injectPreview(item) {
+  const grid = document.getElementById('previewGrid');
+  if (!grid) return;
+  const cards = grid.querySelectorAll('.preview-card');
+  const firstEmpty = [...cards].find(c => c.querySelector('.card-label') && !c.querySelector('.card-label').textContent.trim().includes('Upload'));
+  if (firstEmpty && item.dataUrl && item.type.startsWith('image/')) {
+    firstEmpty.innerHTML = `<img src="${item.dataUrl}" alt="${item.name}"><div class="card-label" style="background:rgba(0,0,0,.5)">${esc(item.name.slice(0,20))}</div>`;
+  }
+  document.getElementById('previewMore').textContent = `+${Math.max(0,S.leads.length-5)} more`;
+  document.getElementById('previewCount').textContent = S.leads.length;
+}
+
+function updateStats() {
+  const leads = S.leads;
+  document.getElementById('s-files').textContent    = S.queue.length;
+  document.getElementById('s-cards').textContent    = leads.length;
+  document.getElementById('s-approved').textContent = leads.filter(l=>l.status==='Approved').length;
+  document.getElementById('s-pending').textContent  = leads.filter(l=>l.status==='Extracted').length;
+  document.getElementById('s-leads').textContent    = leads.length;
+  document.getElementById('s-dups').textContent     = S.duplicates.length;
+  document.getElementById('dupBadge').textContent   = S.duplicates.length;
+  document.getElementById('previewCount').textContent = leads.length;
+  document.getElementById('previewMore').textContent = `+${Math.max(0,leads.length-5)} more`;
+}
+
+function renderAnalytics() {
+  const filter = document.getElementById('anaFilter')?.value || 'all';
+  let leads = S.leads;
+  if (filter === 'today') {
+    const today = new Date().toDateString();
+    leads = leads.filter(l => l.createdAt && new Date(l.createdAt).toDateString() === today);
+  } else if (filter === 'week') {
+    const week = Date.now() - 7*24*60*60*1000;
+    leads = leads.filter(l => l.createdAt && new Date(l.createdAt) >= week);
+  }
+
+  document.getElementById('anaTotal').textContent = leads.length;
+
+  const topN = (arr, n=5) => {
+    const counts = {};
+    arr.filter(Boolean).forEach(v => { const k=v.trim(); if(k) counts[k]=(counts[k]||0)+1; });
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  };
+
+  const colors = ['var(--teal)','var(--blue)','var(--amber)','var(--green)','var(--rose)'];
+  const renderBars = (containerId, items) => {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (!items.length) { el.innerHTML = '<div style="color:var(--w3);font-size:11px;font-family:var(--mono)">No data yet</div>'; return; }
+    const max = items[0][1];
+    el.innerHTML = items.map(([k,v],i) => `<div class="ana-bar-row">
+      <span class="ana-bar-label" title="${esc(k)}">${esc(k)}</span>
+      <div class="ana-bar-track"><div class="ana-bar-fill" style="width:${(v/max*100).toFixed(0)}%;background:${colors[i%colors.length]}"></div></div>
+      <span class="ana-bar-val">${v}</span>
+    </div>`).join('');
+  };
+
+  renderBars('anaIndustries', topN(leads.map(l=>l.industry)));
+  renderBars('anaCities',     topN(leads.map(l=>l.city)));
+}
+
+function renderDuplicates() {
+  const el = document.getElementById('dupList');
+  if (!el) return;
+  if (!S.duplicates.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--w3);font-family:var(--mono);font-size:12px"><i class="fa-solid fa-copy" style="font-size:28px;display:block;margin-bottom:10px;opacity:.3"></i>No duplicates detected</div>'; return; }
+  el.innerHTML = S.duplicates.map((dup,i) => {
+    const ex = S.leads.find(l=>l._id===dup.a);
+    const nw = dup.lead;
+    return `<div class="dup-card">
+      <div class="dup-field"><div class="dup-label">Existing Lead</div><div class="dup-val">${esc(ex?.contactName||'?')} · ${esc(ex?.company||'?')}</div><div style="font-size:10px;color:var(--w3);font-family:var(--mono)">${esc(ex?.email||'')} ${esc(ex?.mobile||'')}</div></div>
+      <div style="color:var(--w3);font-size:18px">≈</div>
+      <div class="dup-field"><div class="dup-label">New Duplicate</div><div class="dup-val">${esc(nw.contactName||nw.company||'?')}</div><div style="font-size:10px;color:var(--w3);font-family:var(--mono)">${esc(nw.email||'')} ${esc(nw.mobile||'')}</div></div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button style="padding:5px 10px;background:var(--teal2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--teal);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans)" onclick="mergeDup(${i})">Merge</button>
+        <button style="padding:5px 10px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);border-radius:var(--r);color:var(--green);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans)" onclick="saveAnyway(${i})">Save Anyway</button>
+        <button style="padding:5px 10px;background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w3);font-size:11px;cursor:pointer;font-family:var(--sans)" onclick="skipDup(${i})">Skip</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function mergeDup(i) { skipDup(i); toast('Leads merged (existing kept)', 's'); }
+async function saveAnyway(i) {
+  const dup = S.duplicates[i];
+  const lead = { ...dup.lead, _id:'l'+Date.now()+'_'+Math.random().toString(36).slice(2,7) };
+  await persistLead(lead);
+  S.duplicates.splice(i, 1);
+  renderAll(); toast('Saved as new lead', 's');
+}
+function skipDup(i) { S.duplicates.splice(i,1); renderDuplicates(); updateStats(); }
+
+function renderExportPreview() {
+  const colsEl = document.getElementById('previewCols');
+  const rowsEl = document.getElementById('previewRows');
+  if (!colsEl || !rowsEl) return;
+  colsEl.innerHTML = COSMOS_COLS.map(c => `<th>${c}</th>`).join('');
+  const rows = buildCosmosRows('all').slice(0,3);
+  rowsEl.innerHTML = rows.length ? rows.map(r => `<tr>${COSMOS_COLS.map(c=>`<td title="${esc(r[c])}">${esc(r[c])||'—'}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${COSMOS_COLS.length}" style="text-align:center;padding:20px;color:var(--w3)">No leads yet</td></tr>`;
+}
+
+function renderSettingsPage() {
+  const sb = document.getElementById('settBranch');
+  const sa = document.getElementById('settAssigned');
+  const sk = document.getElementById('settApiKey');
+  if (sb) sb.value = S.defaults.salesBranch||'';
+  if (sa) sa.value = S.defaults.assignedTo||'';
+  if (sk) sk.value = localStorage.getItem('cosmos_claude_api_key') || '';
+
+  // Populate backend URL
+  const sbu = document.getElementById('settBackendUrl');
+  if (sbu) sbu.value = localStorage.getItem('cosmos_backend_url') || '';
+
+  // Update auth panels based on connection status and user availability
+  const loggedIn = !!(BACKEND_ONLINE && AUTH_TOKEN && S.currentUser);
+  const outPanel = document.getElementById('authLoggedOut');
+  const inPanel = document.getElementById('authLoggedIn');
+  const msgEl = document.getElementById('loggedInUserMsg');
+
+  if (loggedIn) {
+    if (outPanel) outPanel.classList.add('hidden');
+    if (inPanel) inPanel.classList.remove('hidden');
+    if (msgEl) msgEl.textContent = `Logged in as ${S.currentUser.name} (${S.currentUser.email})`;
+  } else {
+    if (outPanel) outPanel.classList.remove('hidden');
+    if (inPanel) inPanel.classList.add('hidden');
+  }
+
+  const colPrev = document.getElementById('colPreview');
+  if (colPrev) colPrev.innerHTML = COSMOS_COLS.map((c,i) => `<span class="col-tag">${String(i+1).padStart(2,'0')}. ${c}</span>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   FILTER & SEARCH
+══════════════════════════════════════════════════════════ */
+function filterTable(tbodyId, query) {
+  const q = (query||'').toLowerCase();
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(tr => {
+    tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function filterByStatus(tbodyId, status) {
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(tr => {
+    if (!status) { tr.style.display = ''; return; }
+    tr.style.display = tr.textContent.includes(status) ? '' : 'none';
+  });
+}
+
+function toggleAll(tbodyId, masterCb) {
+  document.querySelectorAll(`#${tbodyId} .cb`).forEach(cb => cb.checked = masterCb.checked);
+}
+
+/* ══════════════════════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════════════════════ */
+function saveDefaults() {
+  S.defaults.salesBranch = g('settBranch');
+  S.defaults.assignedTo  = g('settAssigned');
+  // Save API key to localStorage (never sent to server, never in source code)
+  const apiKey = g('settApiKey');
+  if (apiKey) localStorage.setItem('cosmos_claude_api_key', apiKey);
+  localStorage.setItem('cosmos_defaults', JSON.stringify(S.defaults));
+  // Sync export fields
+  const eb = document.getElementById('expBranch'); if(eb) eb.value = S.defaults.salesBranch||'';
+  const ea = document.getElementById('expAssigned'); if(ea) ea.value = S.defaults.assignedTo||'';
+  toast('Defaults saved', 's');
+}
+
+function saveBackendUrl() {
+  const url = g('settBackendUrl');
+  if (url) {
+    localStorage.setItem('cosmos_backend_url', url);
+    BACKEND_URL = url;
+    toast('Backend URL updated. Re-connecting...', 'i');
+  } else {
+    localStorage.removeItem('cosmos_backend_url');
+    BACKEND_URL = window.location.hostname === 'cosmos-lip.vercel.app' ? PROD_BACKEND : DEV_BACKEND;
+    toast('Backend URL reset. Re-connecting...', 'i');
+  }
+  initBackendConnection().then(() => loadLeads());
+}
+
+async function doLogin() {
+  const email = g('settEmail');
+  const password = g('settPassword');
+  if (!email || !password) {
+    toast('Email and password are required', 'w');
+    return;
+  }
+  try {
+    toast('Logging in...', 'i');
+    const res = await API.login(email, password);
+    toast(`Welcome, ${res.user?.name || 'User'}!`, 's');
+    document.getElementById('settPassword').value = '';
+    await initBackendConnection();
+    await loadLeads();
+    renderSettingsPage();
+  } catch (e) {
+    toast(e.message, 'e');
+  }
+}
+
+async function doLogout() {
+  try {
+    if (BACKEND_ONLINE && AUTH_TOKEN) {
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: API._headers()
+      }).catch(() => {});
+    }
+  } finally {
+    AUTH_TOKEN = null;
+    localStorage.removeItem('cosmos_auth_token');
+    S.currentUser = null;
+    BACKEND_ONLINE = false;
+    await initBackendConnection();
+    await loadLeads();
+    renderSettingsPage();
+    toast('Logged out successfully', 's');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════════ */
+const PAGE_TITLES = {
+  dashboard: ['Cosmos Lead Intelligence Platform', 'AI-Powered Business Card & Visitor Data Automation'],
+  upload:    ['Upload Center', 'Add business card images or PDFs'],
+  queue:     ['Processing Queue', 'Track AI extraction progress'],
+  leads:     ['All Leads', 'Browse, filter and manage extracted leads'],
+  duplicates:['Duplicate Detection', 'Review and resolve duplicate leads'],
+  export:    ['Export to Cosmos CRM', 'Download leads as Cosmos-format CSV'],
+  settings:  ['Settings', 'Configure Claude API key and export defaults'],
+};
+
+function switchPage(page) {
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.page===page));
+  document.querySelectorAll('.pg').forEach(el => el.classList.remove('active'));
+  closeSidebar();
+  const pgEl = document.getElementById('pg-'+page);
+  if (pgEl) pgEl.classList.add('active');
+  const titles = PAGE_TITLES[page] || ['Cosmos Lead Intelligence Platform',''];
+  document.getElementById('pageTitle').textContent = titles[0];
+  document.getElementById('pageSubtitle').textContent = titles[1];
+  if (page==='settings') renderSettingsPage();
+  if (page==='export')   { renderExportPreview(); const eb=document.getElementById('expBranch'); const ea=document.getElementById('expAssigned'); if(eb&&!eb.value) eb.value=S.defaults.salesBranch||''; if(ea&&!ea.value) ea.value=S.defaults.assignedTo||''; }
+  if (page==='leads')    renderTable('allLeadsBody', S.page.all);
+  if (page==='duplicates') renderDuplicates();
+}
+
+/* ══════════════════════════════════════════════════════════
+   MISC HELPERS
+══════════════════════════════════════════════════════════ */
+const now = () => new Date().toISOString().slice(0,19).replace('T',' ');
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+function confirmDelete(id) {
+  if (confirm('Delete this lead?')) deleteLead(id);
+}
+
+function dupAction(action) {
+  document.getElementById('dupModal')?.classList.add('hidden');
+}
+
+function toast(msg, type='i', dur=3500) {
+  const hub = document.getElementById('toasts');
+  const t = document.createElement('div');
+  const icons = { s:'fa-circle-check', i:'fa-circle-info', w:'fa-triangle-exclamation', e:'fa-circle-xmark' };
+  t.className = `toast t-${type}`;
+  t.innerHTML = `<i class="fa-solid ${icons[type]||icons.i}"></i><span>${msg}</span>`;
+  hub.appendChild(t);
+  requestAnimationFrame(() => setTimeout(() => t.classList.add('in'), 20));
+  setTimeout(() => { t.classList.remove('in'); setTimeout(()=>t.remove(),320); }, dur);
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
+async function init() {
+  // Sidebar nav
+  document.querySelectorAll('.sb-item').forEach(el => {
+    el.addEventListener('click', () => switchPage(el.dataset.page));
+  });
+
+  // Mobile sidebar toggle
+  document.getElementById('mobToggle').addEventListener('click', toggleSidebar);
+  document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+  // Drop zones
+  ['mainDropzone','uploadDropzone'].forEach(id => {
+    const dz = document.getElementById(id);
+    if (!dz) return;
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', e => { if(!dz.contains(e.relatedTarget)) dz.classList.remove('drag'); });
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); addFilesToQueue([...e.dataTransfer.files]); });
+    dz.addEventListener('click', () => document.getElementById(id==='mainDropzone'?'fileInput':'fileInput2').click());
+  });
+  ['btnSelectFiles','btnSelectFiles2'].forEach((id,i) => {
+    document.getElementById(id)?.addEventListener('click', e => { e.stopPropagation(); document.getElementById(i===0?'fileInput':'fileInput2').click(); });
+  });
+  ['fileInput','fileInput2'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', e => { addFilesToQueue([...e.target.files]); e.target.value=''; });
+  });
+
+  // Load data
+  await loadLeads();
+
+  // Try to connect to backend
+  await initBackendConnection();
+
+  console.log('%cCosmos Lead Intelligence Platform v2.0', 'color:#00c4cc;font-weight:bold;font-size:14px');
+  console.log(`%cBackend: ${BACKEND_ONLINE ? '✅ Connected' : '○ Standalone mode'}`, 'color:#22c55e;font-size:11px');
+}
+
+if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+// =============================================================================
+// COSMOS LEAD INTELLIGENCE PLATFORM — Database Schema
+// PostgreSQL + Prisma
+// =============================================================================
+// Design notes:
+//   * One Upload -> many Cards (multi-card detection on a single page).
+//   * One Card  -> one OcrResult (the chosen, highest-confidence result) plus
+//                  raw per-engine results retained in `engineResults` JSON.
+//   * One Card  -> one Lead (the reviewable, CRM-mappable record).
+//   * One Lead  -> many Contacts (a card may list owner + sales + accounts...).
+//   * Company is de-duplicated and shared across leads (normalized by name+domain).
+//   * Everything mutating is recorded in AuditLog.
+// =============================================================================
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Auth / RBAC
+// ----------------------------------------------------------------------------
+enum Role {
+  ADMIN
+  REVIEWER
+  UPLOADER
+  VIEWER
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         Role       @default(REVIEWER)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  uploads      Upload[]
+  reviews      Lead[]     @relation("ReviewedBy")
+  exports      Export[]
+  auditLogs    AuditLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// ----------------------------------------------------------------------------
+// Ingestion
+// ----------------------------------------------------------------------------
+enum UploadStatus {
+  PENDING
+  DETECTING
+  OCR
+  EXTRACTING
+  READY_FOR_REVIEW
+  FAILED
+}
+
+model Upload {
+  id            String       @id @default(uuid())
+  originalName  String
+  storedPath    String
+  mimeType      String
+  sizeBytes     Int
+  pageCount     Int          @default(1)
+  source        String?
+  status        UploadStatus @default(PENDING)
+  error         String?
+  uploadedById  String
+  uploadedBy    User         @relation(fields: [uploadedById], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  cards         Card[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([uploadedById])
+  @@index([source])
+  @@map("uploads")
+}
+
+// One detected/cropped card. A single upload page can yield many of these.
+model Card {
+  id              String     @id @default(uuid())
+  uploadId        String
+  upload          Upload     @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  pageIndex       Int        @default(0)
+  cardIndex       Int        @default(0)
+  croppedPath     String     @default("")
+  bbox            Json?
+  quadrilateral   Json?
+  rotationApplied Float      @default(0)
+  qualityScore    Float      @default(0)
+  createdAt       DateTime   @default(now())
+
+  ocrResult       OcrResult?
+  lead            Lead?
+
+  @@index([uploadId])
+  @@map("cards")
+}
+
+// ----------------------------------------------------------------------------
+// OCR
+// ----------------------------------------------------------------------------
+enum OcrEngine {
+  PADDLEOCR
+  TESSERACT
+  MERGED
+}
+
+model OcrResult {
+  id            String    @id @default(uuid())
+  cardId        String    @unique
+  card          Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  chosenEngine  OcrEngine
+  rawText       String
+  confidence    Float
+  engineResults Json
+  language      String?
+  createdAt     DateTime  @default(now())
+
+  @@map("ocr_results")
+}
+
+// ----------------------------------------------------------------------------
+// Leads / Companies / Contacts
+// ----------------------------------------------------------------------------
+enum LeadStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  MERGED
+}
+
+model Company {
+  id            String   @id @default(uuid())
+  name          String
+  normalizedKey String   @unique
+  website       String?
+  domain        String?
+  industry      String?
+  gstin         String?
+  city          String?
+  state         String?
+  country       String?
+  postalCode    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  leads         Lead[]
+
+  @@index([industry])
+  @@index([state])
+  @@index([city])
+  @@index([name])
+  @@map("companies")
+}
+
+model Lead {
+  id             String      @id @default(uuid())
+  cardId         String      @unique
+  card           Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  companyId      String?
+  // FIX: SetNull on Company delete — leads are retained, company reference cleared.
+  company        Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  companyName    String?
+  website        String?
+  email          String?
+  phonePrimary   String?
+  phoneSecondary String?
+  address        String?
+  city           String?
+  state          String?
+  country        String?
+  postalCode     String?
+  gstin          String?
+  industry       String?
+  linkedin       String?
+  twitter        String?
+  facebook       String?
+  instagram      String?
+  youtube        String?
+  whatsapp       String?
+  qrCodeData     String?
+  notes          String?
+
+  status         LeadStatus  @default(PENDING_REVIEW)
+  aiConfidence   Float       @default(0)
+  validation     Json?
+  source         String?
+
+  reviewedById   String?
+  reviewedBy     User?       @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt     DateTime?
+
+  mergedIntoId   String?
+  scannedAt      DateTime    @default(now())
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  contacts       Contact[]
+  duplicatesA    Duplicate[] @relation("DupLeadA")
+  duplicatesB    Duplicate[] @relation("DupLeadB")
+
+  @@index([status])
+  @@index([companyId])
+  @@index([email])
+  @@index([source])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model Contact {
+  id          String   @id @default(uuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fullName    String?
+  designation String?
+  department  String?
+  email       String?
+  mobile      String?
+  phone       String?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([leadId])
+  @@map("contacts")
+}
+
+// ----------------------------------------------------------------------------
+// Duplicates
+// ----------------------------------------------------------------------------
+enum DuplicateStatus {
+  OPEN
+  MERGED
+  DISMISSED
+}
+
+model Duplicate {
+  id         String          @id @default(uuid())
+  leadAId    String
+  leadA      Lead            @relation("DupLeadA", fields: [leadAId], references: [id], onDelete: Cascade)
+  leadBId    String
+  leadB      Lead            @relation("DupLeadB", fields: [leadBId], references: [id], onDelete: Cascade)
+  score      Float
+  reasons    Json
+  status     DuplicateStatus @default(OPEN)
+  createdAt  DateTime        @default(now())
+
+  @@unique([leadAId, leadBId])
+  @@index([status])
+  @@map("duplicates")
+}
+
+// ----------------------------------------------------------------------------
+// Exports
+// ----------------------------------------------------------------------------
+enum ExportFormat {
+  CSV
+  XLSX
+  JSON
+}
+
+model Export {
+  id          String       @id @default(uuid())
+  format      ExportFormat
+  storedPath  String
+  leadCount   Int
+  filters     Json?
+  createdById String
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+
+  @@index([createdAt])
+  @@index([createdById])
+  @@map("exports")
+}
+
+// ----------------------------------------------------------------------------
+// Audit
+// ----------------------------------------------------------------------------
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  // SetNull: audit history is preserved when a user is deleted.
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([userId])
+  @@map("audit_logs")
+}

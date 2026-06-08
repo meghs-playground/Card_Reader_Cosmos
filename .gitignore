@@ -1,0 +1,54 @@
+# ── Node ─────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Environment files (NEVER commit secrets) ─────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+backend/.env
+
+# ── Prisma ───────────────────────────────────────────────────
+backend/node_modules/.prisma/
+
+# ── Uploads & exports (user data — not for git) ──────────────
+backend/uploads/
+backend/exports/
+uploads/
+exports/
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.Python
+
+# ── PaddleOCR model cache ────────────────────────────────────
+~/.paddleocr/
+inference/
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ──────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Docker ───────────────────────────────────────────────────
+.docker/
