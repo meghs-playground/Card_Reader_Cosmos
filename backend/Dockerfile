@@ -8,6 +8,8 @@ RUN npm ci --only=production
 # ── Stage 2: Prisma generate ─────────────────────────────────────────────────
 FROM node:20-alpine AS prisma
 WORKDIR /app
+RUN apk add --no-cache openssl
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY database/schema.prisma ./database/schema.prisma
@@ -18,6 +20,7 @@ FROM node:20-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
+RUN apk add --no-cache openssl
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S cosmos && adduser -u 1001 -S cosmos -G cosmos
