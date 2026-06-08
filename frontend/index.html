@@ -760,16 +760,15 @@ const FIELD_MAP = {
    Connects to Node.js backend at BACKEND_URL.
    Falls back to standalone (IndexedDB only) if backend is unreachable.
 ══════════════════════════════════════════════════════════ */
-const PROD_BACKEND = 'https://cosmos-backend-zqap.onrender.com';
+const PROD_BACKEND = 'https://card-reader-cosmos-1.onrender.com';
 const DEV_BACKEND  = 'http://localhost:4000';
-const saved = localStorage.getItem('cosmos_backend_url');
+const saved   = localStorage.getItem('cosmos_backend_url');
+const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 let BACKEND_URL;
 if (saved && saved !== DEV_BACKEND) {
   BACKEND_URL = saved;
-} else if (window.location.hostname === 'cosmos-lip.vercel.app') {
-  BACKEND_URL = PROD_BACKEND;
 } else {
-  BACKEND_URL = DEV_BACKEND;
+  BACKEND_URL = isLocal ? DEV_BACKEND : PROD_BACKEND;
 }
 let AUTH_TOKEN = localStorage.getItem('cosmos_auth_token') || null;
 
@@ -1605,7 +1604,7 @@ function saveBackendUrl() {
     toast('Backend URL updated. Re-connecting...', 'i');
   } else {
     localStorage.removeItem('cosmos_backend_url');
-    BACKEND_URL = window.location.hostname === 'cosmos-lip.vercel.app' ? PROD_BACKEND : DEV_BACKEND;
+    BACKEND_URL = ['localhost','127.0.0.1'].includes(window.location.hostname) ? DEV_BACKEND : PROD_BACKEND;
     toast('Backend URL reset. Re-connecting...', 'i');
   }
   initBackendConnection().then(() => loadLeads());
