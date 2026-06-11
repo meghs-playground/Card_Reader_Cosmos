@@ -41,7 +41,17 @@ def _get_paddle():
         return None
     try:
         from paddleocr import PaddleOCR  # type: ignore
-        return PaddleOCR(use_angle_cls=True, lang="en", show_log=False)
+        # Memory-conscious config so Paddle can coexist with Tesseract on a
+        # 512 MB instance: CPU only, single thread, MKL-DNN off. The default
+        # PP-OCRv4 mobile models are already lightweight.
+        return PaddleOCR(
+            use_angle_cls=True,
+            lang="en",
+            show_log=False,
+            use_gpu=False,
+            enable_mkldnn=False,
+            cpu_threads=1,
+        )
     except Exception as e:
         log.warning("PaddleOCR unavailable: %s", e)
         return None

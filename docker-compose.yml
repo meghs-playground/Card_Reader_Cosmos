@@ -105,6 +105,8 @@ services:
     container_name: cosmos_ocr
     restart: unless-stopped
     environment:
+      # 0 = both engines (PaddleOCR + Tesseract). Matches the Dockerfile default.
+      # Set PADDLE_DISABLED=1 in your .env only to force Tesseract-only mode.
       PADDLE_DISABLED:               ${PADDLE_DISABLED:-0}
       CONFIDENCE_FALLBACK_THRESHOLD: ${CONFIDENCE_FALLBACK_THRESHOLD:-0.85}
       PDF_RASTER_DPI:                ${PDF_RASTER_DPI:-200}
