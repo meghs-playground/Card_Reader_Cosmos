@@ -16,6 +16,7 @@ async function createUpload(req, res, next) {
     }
 
     const results = [];
+    const claudeKey = req.body.claude_key || undefined; // dashboard Settings block
     const userId = req.user?.sub || (await prisma.user.findFirst({ select: { id: true }, orderBy: { createdAt: 'asc' } }))?.id || 'unknown';
 
     for (const f of req.files) {
@@ -41,7 +42,7 @@ async function createUpload(req, res, next) {
         }
 
         // Process synchronously while the file is still on disk
-        const procResult = await processUpload(upload.id);
+        const procResult = await processUpload(upload.id, { claudeKey });
         results.push({
           id: upload.id,
           name: f.originalname,
@@ -109,7 +110,7 @@ async function reprocessUpload(req, res, next) {
     });
 
     // Process synchronously
-    const procResult = await processUpload(upload.id);
+    const procResult = await processUpload(upload.id, { claudeKey: req.body.claude_key || undefined });
     res.json({
       message: "Upload reprocessed",
       id: upload.id,

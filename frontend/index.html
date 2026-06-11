@@ -769,6 +769,10 @@ const API = {
     const form = new FormData();
     for (const f of files) form.append('files', f);
     if (source) form.append('source', source);
+    // Pass the Claude API key from the dashboard Settings block to the backend,
+    // which uses it for Claude Vision extraction (falls back to OCR if absent).
+    const ck = localStorage.getItem('cosmos_claude_api_key') || '';
+    if (ck) form.append('claude_key', ck);
     const h = {};
     if (AUTH_TOKEN) h['Authorization'] = `Bearer ${AUTH_TOKEN}`;
     const r = await fetch(`${BACKEND_URL}/api/upload`, { method: 'POST', headers: h, body: form });

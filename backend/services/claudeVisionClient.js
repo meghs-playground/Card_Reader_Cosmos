@@ -65,18 +65,27 @@ Rules:
 - confidence is an integer 0-100 reflecting how clearly the card was read.
 - If no business card is visible, return {"cards": []}.`;
 
-function isEnabled() {
-  return !!CLAUDE_API_KEY;
+/**
+ * The key may come from the backend env (CLAUDE_API_KEY) or be passed per
+ * request from the dashboard Settings block. The env var wins when both exist.
+ */
+function resolveKey(keyOverride) {
+  return CLAUDE_API_KEY || (keyOverride || "").trim();
+}
+
+function isEnabled(keyOverride) {
+  return !!resolveKey(keyOverride);
 }
 
 /**
  * Whether this upload should go through Claude Vision (vs the Python pipeline).
  * @param {string} mimeType
  * @param {number} sizeBytes
+ * @param {string} [keyOverride] per-request key from the dashboard Settings block
  */
-function canHandle(mimeType, sizeBytes) {
+function canHandle(mimeType, sizeBytes, keyOverride) {
   return (
-    isEnabled() &&
+    isEnabled(keyOverride) &&
     SUPPORTED_MIME.test(mimeType || "") &&
     (sizeBytes || 0) <= MAX_IMAGE_BYTES
   );
@@ -84,11 +93,15 @@ function canHandle(mimeType, sizeBytes) {
 
 /**
  * Extract every card from an image file.
+ * @param {string} filePath
+ * @param {string} mimeType
+ * @param {string} [keyOverride] per-request key from the dashboard Settings block
  * @returns {Promise<Array>} array of raw card objects (see PROMPT shape)
  * @throws on any API / parse error — caller falls back to Python OCR
  */
-async function extractCards(filePath, mimeType) {
-  if (!CLAUDE_API_KEY) throw new Error("CLAUDE_API_KEY not set");
+async function extractCards(filePath, mimeType, keyOverride) {
+  const apiKey = resolveKey(keyOverride);
+  if (!apiKey) throw new Error("No Claude API key available");
 
   const buffer = fs.readFileSync(filePath);
   const b64 = buffer.toString("base64");
@@ -113,7 +126,7 @@ async function extractCards(filePath, mimeType) {
       },
       {
         headers: {
-          "x-api-key": CLAUDE_API_KEY,
+          "x-api-key": apiKey,
           "anthropic-version": "2023-06-01",
           "content-type": "application/json",
         },

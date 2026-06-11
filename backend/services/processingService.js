@@ -269,7 +269,8 @@ function scheduleDuplicateScan() {
   });
 }
 
-async function processUpload(uploadId) {
+async function processUpload(uploadId, opts = {}) {
+  const claudeKey = opts.claudeKey || undefined; // from dashboard Settings block
   const upload = await prisma.upload.findUnique({ where: { id: uploadId } });
   if (!upload) throw new Error(`Upload ${uploadId} not found`);
 
@@ -279,9 +280,9 @@ async function processUpload(uploadId) {
   });
 
   // ── Path 1: Claude Vision (preferred for supported images) ─────────────────
-  if (claudeVision.canHandle(upload.mimeType, upload.sizeBytes)) {
+  if (claudeVision.canHandle(upload.mimeType, upload.sizeBytes, claudeKey)) {
     try {
-      const cards = await claudeVision.extractCards(upload.storedPath, upload.mimeType);
+      const cards = await claudeVision.extractCards(upload.storedPath, upload.mimeType, claudeKey);
 
       if (Array.isArray(cards) && cards.length) {
         await prisma.upload.update({
