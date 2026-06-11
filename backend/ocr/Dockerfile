@@ -1,14 +1,14 @@
 # ── Python 3.11 — required for PaddleOCR (paddle has no 3.12+ wheels) ────────
 FROM python:3.11-slim AS runtime
 
-# PADDLE_DISABLED defaults to 0 here so a build straight from this Dockerfile
-# (e.g. Render) runs BOTH engines, matching docker-compose. Override to 1 only
-# on hosts where PaddlePaddle cannot fit in memory or is unavailable.
-# The thread caps below keep PaddlePaddle's CPU/RAM footprint small enough to
-# coexist with Tesseract on constrained (e.g. 512 MB) instances.
+# PADDLE_DISABLED=1 (Tesseract-only) by default. PaddleOCR is more accurate but
+# needs ~1 GB RAM: on a 512 MB instance (e.g. Render free tier) it loads, serves
+# one slow request (~90s), then OOM-crashes the whole service. Verified live.
+# To enable BOTH engines, set PADDLE_DISABLED=0 AND run on >= 1 GB RAM.
+# The thread caps below shrink PaddlePaddle's footprint if/when you re-enable it.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PADDLE_DISABLED=0 \
+    PADDLE_DISABLED=1 \
     CONFIDENCE_FALLBACK_THRESHOLD=0.85 \
     PDF_RASTER_DPI=150 \
     OMP_NUM_THREADS=1 \
