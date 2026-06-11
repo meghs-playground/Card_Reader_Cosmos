@@ -1164,11 +1164,24 @@ async function processAll() {
 /* ══════════════════════════════════════════════════════════
    LEAD OPERATIONS
 ══════════════════════════════════════════════════════════ */
+// Re-login if the token is missing or expired so approvals always persist to
+// the backend instead of silently becoming local-only (which made approved
+// leads "come back" as Extracted after a refresh).
+async function ensureAuth() {
+  if (AUTH_TOKEN) {
+    const user = await API.me().catch(() => null);
+    if (user) return;
+    AUTH_TOKEN = null; localStorage.removeItem('cosmos_auth_token');
+  }
+  await API.login(DEMO_EMAIL, DEMO_PASSWORD);
+}
+
 async function approveLead(id) {
   const lead = S.leads.find(l => l._id === id);
   if (!lead) return;
   try {
-    if (BACKEND_ONLINE && AUTH_TOKEN) {
+    if (BACKEND_ONLINE) {
+      await ensureAuth();
       await API.approveLead(id);
     }
     lead.status = 'Approved'; lead.updatedAt = now();
@@ -1184,13 +1197,15 @@ async function approveAll() {
   const pending = S.leads.filter(l => l.status === 'Extracted' || l.status === 'PENDING_REVIEW');
   if (!pending.length) { toast('No extracted leads to approve', 'w'); return; }
   try {
-    if (BACKEND_ONLINE && AUTH_TOKEN) {
+    if (BACKEND_ONLINE) {
+      await ensureAuth();
       const ids = pending.map(l => l._id || l.id).filter(Boolean);
-      await fetch(`${BACKEND_URL}/api/leads/approve`, {
+      const r = await fetch(`${BACKEND_URL}/api/leads/approve`, {
         method: 'POST',
         headers: API._headers(),
         body: JSON.stringify({ ids }),
       });
+      if (!r.ok) throw new Error(`server rejected the request (HTTP ${r.status})`);
     }
     for (const l of pending) { l.status = 'Approved'; l.updatedAt = now(); await persistLead(l); }
     toast(`${pending.length} leads approved!`, 's');
@@ -1275,12 +1290,15 @@ function buildCosmosRows(statusFilter) {
 }
 
 function doExport() {
+  const statusFilter = document.getElementById('expStatus')?.value || 'all';
   if (BACKEND_ONLINE) {
-    window.location.href = `${BACKEND_URL}/api/export/csv`;
+    // Pass the status filter through — "Approved Only" must export only
+    // APPROVED leads, not every non-rejected lead.
+    const qs = statusFilter !== 'all' ? `?status=${encodeURIComponent(statusFilter)}` : '';
+    window.location.href = `${BACKEND_URL}/api/export/csv${qs}`;
     toast('Downloading CSV…', 's');
     return;
   }
-  const statusFilter = document.getElementById('expStatus')?.value || 'all';
   const rows = buildCosmosRows(statusFilter);
   if (!rows.length) { toast('No leads to export', 'w'); return; }
   const esc = v => { const s = v==null?'':String(v); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
@@ -1307,7 +1325,10 @@ function renderAll() {
 function renderTable(tbodyId, page = 1) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
-  const leads = [...S.leads].reverse();
+  // Most recently updated first — a just-approved or just-scanned lead shows
+  // at the first position on page 1 instead of landing on the last page.
+  const ts = l => new Date(l.updatedAt || l.createdAt || 0).getTime() || 0;
+  const leads = [...S.leads].sort((a, b) => ts(b) - ts(a));
   const start = (page-1) * S.perPage;
   const slice = leads.slice(start, start + S.perPage);
   const isDash = tbodyId === 'dashBody';
@@ -1714,11 +1735,13 @@ async function init() {
     document.getElementById(id)?.addEventListener('change', e => { addFilesToQueue([...e.target.files]); e.target.value=''; });
   });
 
+  // Connect to the backend FIRST so leads load from the database (source of
+  // truth). Loading the stale IndexedDB copy first made approved leads
+  // reappear as Extracted after a refresh.
+  await initBackendConnection();
+
   // Load data
   await loadLeads();
-
-  // Try to connect to backend
-  await initBackendConnection();
 
   console.log('%cCosmos Lead Intelligence Platform v2.0', 'color:#00c4cc;font-weight:bold;font-size:14px');
   console.log(`%cBackend: ${BACKEND_ONLINE ? '✅ Connected' : '○ Standalone mode'}`, 'color:#22c55e;font-size:11px');

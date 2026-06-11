@@ -15,7 +15,12 @@ async function buildAndStream(req, res, next, format) {
     const leads = await prisma.lead.findMany({
       where,
       include: { contacts: true, company: true },
-      orderBy: { createdAt: "asc" },
+      // Most recently reviewed/approved first — a lead approved just now is
+      // the first data row in the exported file.
+      orderBy: [
+        { reviewedAt: { sort: "desc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
     });
 
     const { filePath, fileName, rowCount } = await generateExport(leads, format, {
