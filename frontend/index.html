@@ -740,6 +740,38 @@ if (saved && saved !== DEV_BACKEND) {
 let AUTH_TOKEN = localStorage.getItem('cosmos_auth_token') || null;
 const DEMO_EMAIL    = 'admin@cosmos.local';
 const DEMO_PASSWORD = 'abcd';  
+// Downscale a large image (phone photo) to ~1600px JPEG before upload, so it
+// fits under the vision-API size limit and the model is used instead of OCR
+// fallback. PDFs and already-small images pass through unchanged.
+async function downscaleImage(file, maxDim = 1600, quality = 0.85) {
+  try {
+    if (!file || !file.type || !file.type.startsWith('image/')) return file;
+    if (file.size <= 2.5 * 1024 * 1024) return file; // already small enough
+    const dataUrl = await new Promise((res, rej) => {
+      const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file);
+    });
+    const img = await new Promise((res, rej) => {
+      const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataUrl;
+    });
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const cw = Math.max(1, Math.round(img.width * scale));
+    const ch = Math.max(1, Math.round(img.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = cw; canvas.height = ch;
+    canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+    let blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+    if (blob && blob.size > 3 * 1024 * 1024) {
+      blob = (await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7))) || blob;
+    }
+    if (!blob) return file;
+    const base = (file.name || 'card').replace(/\.[^.]+$/, '');
+    return new File([blob], base + '.jpg', { type: 'image/jpeg' });
+  } catch (e) {
+    console.warn('downscaleImage failed, sending original:', e);
+    return file;
+  }
+}
+
 const API = {
   _headers() {
     const h = { 'Content-Type': 'application/json' };
@@ -768,7 +800,13 @@ const API = {
 
   async uploadFiles(files, source) {
     const form = new FormData();
-    for (const f of files) form.append('files', f);
+    // Phone cameras make 4-12 MB photos that exceed the vision-API size limit
+    // (silently falling back to Tesseract). Downscale before upload so the
+    // vision model (Groq/Claude) is actually used.
+    for (const f of files) {
+      const out = await downscaleImage(f);
+      form.append('files', out, out.name || f.name);
+    }
     if (source) form.append('source', source);
     // Pass the Claude API key from the dashboard Settings block to the backend,
     // which uses it for Claude Vision extraction (falls back to OCR if absent).
