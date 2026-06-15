@@ -816,6 +816,15 @@ const API = {
     return data;
   },
 
+  async dismissDuplicate(id) {
+    const r = await fetch(`${BACKEND_URL}/api/duplicates/dismiss`, {
+      method: 'POST', headers: this._headers(), body: JSON.stringify({ id }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Dismiss failed');
+    return data;
+  },
+
   async updateLead(id, fields) {
     const r = await fetch(`${BACKEND_URL}/api/leads/${id}`, {
       method: 'PUT', headers: this._headers(), body: JSON.stringify(fields),
@@ -1605,7 +1614,20 @@ async function saveAnyway(i) {
   S.duplicates.splice(i, 1);
   renderAll(); toast('Saved as new lead', 's');
 }
-function skipDup(i) { S.duplicates.splice(i,1); renderDuplicates(); updateStats(); }
+async function skipDup(i) {
+  const dup = S.duplicates[i];
+  if (!dup) return;
+  try {
+    // Persist the dismissal so it doesn't reappear after a refresh / re-scan.
+    if (BACKEND_ONLINE && AUTH_TOKEN && dup.id) {
+      await API.dismissDuplicate(dup.id);
+    }
+    S.duplicates.splice(i, 1);
+    renderDuplicates(); updateStats();
+  } catch (e) {
+    toast('Dismiss failed: ' + e.message, 'e');
+  }
+}
 
 function renderExportPreview() {
   const colsEl = document.getElementById('previewCols');

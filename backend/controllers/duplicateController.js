@@ -32,6 +32,21 @@ async function list(req, res, next) {
   } catch (e) { next(e); }
 }
 
+async function dismiss(req, res, next) {
+  try {
+    // Accept a single id or a list. Marks the pair DISMISSED so it no longer
+    // appears in the OPEN list — and stays gone across refreshes / re-scans.
+    const ids = req.body.ids || (req.body.id ? [req.body.id] : []);
+    if (!ids.length) return res.status(400).json({ error: "No duplicate id provided" });
+    await prisma.duplicate.updateMany({
+      where: { id: { in: ids } },
+      data: { status: "DISMISSED" },
+    });
+    await audit(req, "DUPLICATE_DISMISS", "Duplicate", null, { ids });
+    res.json({ dismissed: ids.length });
+  } catch (e) { next(e); }
+}
+
 async function merge(req, res, next) {
   try {
     const { keepId, mergeId } = req.body; // keep keepId, mark mergeId merged
@@ -47,4 +62,4 @@ async function merge(req, res, next) {
   } catch (e) { next(e); }
 }
 
-module.exports = { scan, list, merge };
+module.exports = { scan, list, merge, dismiss };

@@ -28,8 +28,25 @@ const path = require("path");
 const prisma = require("../config/db");
 const { detectAndOcr } = require("./cvOcrClient");
 const claudeVision = require("./claudeVisionClient");
+const groqVision = require("./groqVisionClient");
 const { extractEntities } = require("./entityExtraction");
 const { validateLead } = require("./validation");
+
+/**
+ * Choose the AI vision engine for this request. Routes by the key's prefix so
+ * the same dashboard Settings field works for either provider:
+ *   gsk_...   -> Groq      sk-ant-... -> Anthropic (Claude)
+ * If no usable per-request key, falls back to whichever has a backend env key.
+ * Returns null when no AI engine is available (-> Python OCR pipeline).
+ */
+function pickVisionEngine(key) {
+  const k = (key || "").trim();
+  if (k.startsWith("gsk_")) return groqVision;
+  if (k.startsWith("sk-ant-")) return claudeVision;
+  if (groqVision.isEnabled()) return groqVision;
+  if (claudeVision.isEnabled()) return claudeVision;
+  return null;
+}
 
 const CROPS_DIR = process.env.CROPS_DIR || path.resolve("uploads/crops");
 
@@ -279,10 +296,11 @@ async function processUpload(uploadId, opts = {}) {
     data: { status: "DETECTING", error: null },
   });
 
-  // ── Path 1: Claude Vision (preferred for supported images) ─────────────────
-  if (claudeVision.canHandle(upload.mimeType, upload.sizeBytes, claudeKey)) {
+  // ── Path 1: AI vision (Groq or Claude, preferred for supported images) ─────
+  const engine = pickVisionEngine(claudeKey);
+  if (engine && engine.canHandle(upload.mimeType, upload.sizeBytes, claudeKey)) {
     try {
-      const cards = await claudeVision.extractCards(upload.storedPath, upload.mimeType, claudeKey);
+      const cards = await engine.extractCards(upload.storedPath, upload.mimeType, claudeKey);
 
       if (Array.isArray(cards) && cards.length) {
         await prisma.upload.update({
@@ -299,24 +317,24 @@ async function processUpload(uploadId, opts = {}) {
               {
                 pageIndex: 0,
                 cardIndex: i,
-                chosenEngine: "MERGED", // enum has no CLAUDE; tagged via engineResults
+                chosenEngine: "MERGED", // enum has no AI value; tagged via engineResults
                 rawText: JSON.stringify(cards[i]),
                 confidence: entities._aiConfidence || 0,
-                engineResults: { source: "claude-vision", model: claudeVision.CLAUDE_MODEL },
+                engineResults: { source: engine.SOURCE, model: engine.MODEL },
               },
               entities
             );
             createdLeadIds.push(leadId);
           } catch (err) {
             console.error(
-              `[processUpload] Claude card ${i} failed for upload ${uploadId}: ${err.message}`
+              `[processUpload] ${engine.SOURCE} card ${i} failed for upload ${uploadId}: ${err.message}`
             );
             // continue — one bad card must not lose the rest of the batch
           }
         }
 
         console.log(
-          `[processUpload] Upload ${uploadId}: created ${createdLeadIds.length} leads via Claude Vision`
+          `[processUpload] Upload ${uploadId}: created ${createdLeadIds.length} leads via ${engine.SOURCE}`
         );
         await prisma.upload.update({
           where: { id: uploadId },
@@ -325,13 +343,13 @@ async function processUpload(uploadId, opts = {}) {
         scheduleDuplicateScan();
         return { uploadId, pages: 1, cards: cards.length, leadIds: createdLeadIds };
       }
-      // Claude returned no cards — fall through to the OCR pipeline.
+      // Engine returned no cards — fall through to the OCR pipeline.
       console.warn(
-        `[processUpload] Claude Vision found no cards for upload ${uploadId}; falling back to OCR`
+        `[processUpload] ${engine.SOURCE} found no cards for upload ${uploadId}; falling back to OCR`
       );
     } catch (e) {
       console.warn(
-        `[processUpload] Claude Vision failed for upload ${uploadId} (${e.message}); falling back to OCR`
+        `[processUpload] ${engine.SOURCE} failed for upload ${uploadId} (${e.message}); falling back to OCR`
       );
     }
   }

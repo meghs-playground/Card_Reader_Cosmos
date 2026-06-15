@@ -71,5 +71,6 @@ router.post("/leads/:id/reject", authorize("ADMIN", "REVIEWER"), lead.reject);
 // ---- Duplicates write operations (authenticated + role check) ----
 router.post("/duplicates/scan", authorize("ADMIN", "REVIEWER"), dup.scan);
 router.post("/duplicates/merge", authorize("ADMIN", "REVIEWER"), dup.merge);
+router.post("/duplicates/dismiss", authorize("ADMIN", "REVIEWER"), dup.dismiss);
 
 module.exports = router;

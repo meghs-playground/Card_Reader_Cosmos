@@ -158,4 +158,12 @@ async function extractCards(filePath, mimeType, keyOverride) {
   return cards;
 }
 
-module.exports = { isEnabled, canHandle, extractCards, CLAUDE_MODEL };
+module.exports = {
+  isEnabled,
+  canHandle,
+  extractCards,
+  CLAUDE_MODEL,
+  MODEL: CLAUDE_MODEL,
+  SOURCE: "claude-vision",
+  PROMPT,
+};
