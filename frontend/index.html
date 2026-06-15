@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Cosmos Lead Intelligence Platform</title>
+<title>Cosmos Impex — Lead Intelligence</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0b1220;--sidebar:#0e1526;--panel:#111927;--card:#141f30;--card2:#192336;--inp:#0d1825;
-  --teal:#00c4cc;--teal2:rgba(0,196,204,.12);--teal3:rgba(0,196,204,.22);
+  --teal:#2f6bff;--teal2:rgba(47,107,255,.12);--teal3:rgba(47,107,255,.22);
   --green:#22c55e;--green2:rgba(34,197,94,.12);
   --amber:#f59e0b;--amber2:rgba(245,158,11,.12);
   --rose:#ef4444;--rose2:rgba(239,68,68,.12);
   --blue:#3b82f6;--blue2:rgba(59,130,246,.12);
   --w1:#e2eeff;--w2:#8aa0be;--w3:#4a6080;--w4:#1e2d42;
-  --bdr:rgba(255,255,255,.06);--bdr2:rgba(0,196,204,.18);
+  --bdr:rgba(255,255,255,.06);--bdr2:rgba(47,107,255,.30);
   --sans:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
   --r:8px;--r2:12px;--t:.18s ease;
 }
@@ -58,6 +58,37 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
 .notif-btn{position:relative;width:36px;height:36px;border-radius:var(--r);background:rgba(255,255,255,.04);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--w2)}
 .notif-btn .badge{position:absolute;top:-5px;right:-5px;background:var(--rose);color:#fff;font-size:8px;font-weight:700;min-width:16px;height:16px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 3px;font-family:var(--mono)}
 .content{flex:1;overflow-y:auto;padding:20px 22px}
+
+/* ── AUTH GATE (login / register) ── */
+.auth-gate{position:fixed;inset:0;z-index:2000;background:radial-gradient(1200px 600px at 50% -10%,rgba(47,107,255,.12),transparent),linear-gradient(160deg,#0b1220,#0a1830);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.auth-card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--bdr);border-radius:var(--r2);padding:32px 28px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.auth-brand{text-align:center;margin-bottom:24px}
+.auth-brand .bn{font-size:28px;font-weight:900;letter-spacing:2px;color:var(--w1)}
+.auth-brand .bn span{color:var(--teal)}
+.auth-brand .bt{font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--w3);margin-top:7px;font-weight:600}
+.auth-tabs{display:flex;gap:5px;margin-bottom:18px;background:var(--inp);border-radius:var(--r);padding:4px}
+.auth-tab{flex:1;text-align:center;padding:9px;border-radius:6px;font-size:13px;font-weight:600;color:var(--w2);cursor:pointer;transition:var(--t)}
+.auth-tab.active{background:var(--teal);color:#fff}
+.auth-field{margin-bottom:13px}
+.auth-field label{display:block;font-size:11px;color:var(--w2);margin-bottom:6px;font-weight:500}
+.auth-field input{width:100%;padding:12px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w1);font-size:14px;font-family:var(--sans)}
+.auth-field input:focus{outline:none;border-color:var(--teal)}
+.auth-btn{width:100%;padding:13px;background:var(--teal);border:none;border-radius:var(--r);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;transition:var(--t)}
+.auth-btn:hover{filter:brightness(1.12)}
+.auth-msg{font-size:12px;text-align:center;margin-top:13px;min-height:16px;color:var(--w2)}
+.auth-msg.err{color:var(--rose)}
+.auth-foot{text-align:center;font-size:9px;color:var(--w3);margin-top:20px;font-family:var(--mono);letter-spacing:.5px}
+
+/* ── USER CHIP + LOGOUT ── */
+.user-chip{display:flex;align-items:center;gap:8px;padding:5px 11px;border-radius:var(--r);background:rgba(255,255,255,.04);border:1px solid var(--bdr)}
+.user-chip .uc-name{font-size:12px;font-weight:600;color:var(--w1);line-height:1.1}
+.user-chip .uc-role{font-size:8.5px;color:var(--teal);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+
+/* ── TEAM REPORT ── */
+.team-summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.team-emp{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r);background:var(--card);border:1px solid var(--bdr)}
+.team-emp .te-name{font-size:12px;font-weight:600;color:var(--w1)}
+.team-emp .te-count{background:var(--teal2);color:var(--teal);border-radius:8px;padding:1px 8px;font-weight:700;font-family:var(--mono);font-size:12px}
 
 /* ── STATS ── */
 .stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
@@ -314,6 +345,33 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
 <body>
 <div id="toasts"></div>
 
+<!-- ═══ AUTH GATE ═══ -->
+<div class="auth-gate" id="authGate" style="display:none">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="bn">COSMOS <span>IMPEX</span></div>
+      <div class="bt">Building the Machines that Build Your World</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</div>
+      <div class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Create Account</div>
+    </div>
+    <div id="loginForm">
+      <div class="auth-field"><label>Email</label><input id="gateEmail" type="email" autocomplete="username" placeholder="you@cosmos.in"></div>
+      <div class="auth-field"><label>Password</label><input id="gatePassword" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitLogin()"></div>
+      <button class="auth-btn" onclick="submitLogin()">Sign In</button>
+    </div>
+    <div id="registerForm" style="display:none">
+      <div class="auth-field"><label>Full Name</label><input id="regName" placeholder="Your name"></div>
+      <div class="auth-field"><label>Email</label><input id="regEmail" type="email" autocomplete="username" placeholder="you@cosmos.in"></div>
+      <div class="auth-field"><label>Password</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="At least 6 characters" onkeydown="if(event.key==='Enter')submitRegister()"></div>
+      <button class="auth-btn" onclick="submitRegister()">Create Account</button>
+    </div>
+    <div class="auth-msg" id="authMsg"></div>
+    <div class="auth-foot">Cosmos Impex India Pvt Ltd · Lead Intelligence Platform</div>
+  </div>
+</div>
+
 <button class="mob-toggle" id="mobToggle"><i class="fa-solid fa-bars"></i></button>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -366,8 +424,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar">
   <div class="sb-logo">
-    <div class="cosname">COSM<span>OS</span></div>
-    <div class="tagline">Precision Machining Solutions</div>
+    <div class="cosname">COSMOS <span>IMPEX</span></div>
+    <div class="tagline">Building the Machines that Build Your World</div>
     <div class="sub">Lead Intelligence Platform</div>
   </div>
   <nav class="sb-nav">
@@ -377,9 +435,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
     <div class="sb-item" data-page="leads"><i class="fa-solid fa-users"></i>All Leads</div>
     <div class="sb-item" data-page="duplicates"><i class="fa-solid fa-copy"></i>Duplicates<span class="sb-badge orange" id="dupBadge">0</span></div>
     <div class="sb-item" data-page="export"><i class="fa-solid fa-download"></i>Export Data</div>
+    <div class="sb-item" data-page="team" id="navTeam" style="display:none"><i class="fa-solid fa-user-group"></i>Team Report</div>
     <div class="sb-item" data-page="settings"><i class="fa-solid fa-gear"></i>Settings</div>
   </nav>
-  <div class="sb-footer">© 2025 Cosmos Group<br>Lead Intelligence Platform v2.0<br><span style="color:var(--teal);font-size:8px">Powered by Claude AI Vision</span></div>
+  <div class="sb-footer">Cosmos Impex India Pvt Ltd<br>Lead Intelligence Platform<br><span style="color:var(--teal);font-size:8px">CNC Manufacturer since 1987</span></div>
 </aside>
 
 <!-- ═══ MAIN ═══ -->
@@ -390,9 +449,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
       <p id="pageSubtitle">AI-Powered Business Card &amp; Visitor Data Automation</p>
     </div>
     <div class="topbar-right">
-      <span id="connectionBadge" style="font-family:var(--mono);font-size:11px;margin-right:12px;font-weight:600;display:flex;align-items:center;gap:6px">○ Standalone mode</span>
-      <button class="top-btn" onclick="switchPage('export')"><i class="fa-solid fa-file-lines"></i>Reports</button>
+      <span id="connectionBadge" style="font-family:var(--mono);font-size:11px;margin-right:4px;font-weight:600;display:flex;align-items:center;gap:6px">○ Standalone mode</span>
+      <div class="user-chip" id="userChip" style="display:none">
+        <i class="fa-solid fa-circle-user" style="color:var(--teal);font-size:18px"></i>
+        <div><div class="uc-name">—</div><div class="uc-role">—</div></div>
+      </div>
       <button class="top-btn primary" onclick="doExport()"><i class="fa-solid fa-download"></i>Export CSV</button>
+      <button class="top-btn" id="logoutBtn" onclick="doLogout()" style="display:none"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
     </div>
   </div>
 
@@ -660,6 +723,23 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
     </div>
 
     <!-- ══ SETTINGS PAGE ══ -->
+    <!-- ══ TEAM REPORT (super-admin) ══ -->
+    <div id="pg-team" class="pg">
+      <div class="leads-panel">
+        <div class="leads-toolbar">
+          <div class="leads-title">Team Lead Report <span class="count-badge" id="teamTotalBadge">0</span></div>
+          <button class="approve-btn" onclick="loadTeamReport()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div class="team-summary" id="teamSummary"></div>
+        <div style="overflow-x:auto">
+          <table class="leads-table">
+            <thead><tr><th>Date</th><th>Employee</th><th style="text-align:right">Leads Generated</th></tr></thead>
+            <tbody id="teamBody"><tr><td colspan="3" style="text-align:center;padding:30px;color:var(--w3)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="pg-settings" class="pg">
       <div class="settings-grid">
         <div>
@@ -683,7 +763,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
   </div><!-- /content -->
 
   <div style="text-align:center;padding:7px;border-top:1px solid var(--bdr);background:var(--sidebar);font-family:var(--mono);font-size:9px;color:var(--teal);flex-shrink:0">
-    Cosmos Lead Intelligence Platform v2.0 · Powered by Claude AI Vision
+    Cosmos Impex India Pvt Ltd · Lead Intelligence Platform · Powered by AI Vision
   </div>
 </div>
 </div>
@@ -793,6 +873,19 @@ const API = {
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Login failed');
+    AUTH_TOKEN = data.token;
+    localStorage.setItem('cosmos_auth_token', AUTH_TOKEN);
+    return data;
+  },
+
+  async register(name, email, password) {
+    const r = await fetch(`${BACKEND_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Registration failed');
     AUTH_TOKEN = data.token;
     localStorage.setItem('cosmos_auth_token', AUTH_TOKEN);
     return data;
@@ -921,16 +1014,16 @@ async function initBackendConnection() {
       }, 10000);
     })();
   }
-  // Validate the stored token; only log in when it is missing or expired.
+  // Validate the stored token (no silent auto-login — the gate handles sign-in).
   if (BACKEND_ONLINE) {
-    let user = AUTH_TOKEN ? await API.me().catch(() => null) : null;
-    if (!user) {
+    const user = AUTH_TOKEN ? await API.me().catch(() => null) : null;
+    if (user) {
+      S.currentUser = user;
+    } else {
       AUTH_TOKEN = null;
       localStorage.removeItem('cosmos_auth_token');
-      try { await API.login(DEMO_EMAIL, DEMO_PASSWORD); } catch (_) {}
-      user = AUTH_TOKEN ? await API.me().catch(() => null) : null;
+      S.currentUser = null;
     }
-    if (user) S.currentUser = user;
   }
   updateConnectionBadge();
 }
@@ -942,8 +1035,150 @@ function updateConnectionBadge() {
     badge.textContent = '● Connected' + (AUTH_TOKEN ? '' : ' (read-only)');
     badge.style.color = AUTH_TOKEN ? 'var(--green)' : 'var(--amber)';
   } else {
-    badge.textContent = '○ Standalone mode';
+    badge.textContent = '○ Offline';
     badge.style.color = 'var(--w3)';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   AUTH GATE (login / register)
+══════════════════════════════════════════════════════════ */
+function showAuthGate() {
+  const g = document.getElementById('authGate');
+  if (g) g.style.display = 'flex';
+  const lo = document.getElementById('logoutBtn'); if (lo) lo.style.display = 'none';
+  const uc = document.getElementById('userChip'); if (uc) uc.style.display = 'none';
+}
+function hideAuthGate() {
+  const g = document.getElementById('authGate');
+  if (g) g.style.display = 'none';
+}
+function switchAuthTab(tab) {
+  const login = tab === 'login';
+  document.getElementById('loginForm').style.display = login ? '' : 'none';
+  document.getElementById('registerForm').style.display = login ? 'none' : '';
+  document.getElementById('tabLogin').classList.toggle('active', login);
+  document.getElementById('tabRegister').classList.toggle('active', !login);
+  gateMsg('');
+}
+function gateMsg(text, isErr) {
+  const el = document.getElementById('authMsg');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = 'auth-msg' + (isErr ? ' err' : '');
+}
+
+async function submitLogin() {
+  const email = g('gateEmail'), pw = g('gatePassword');
+  if (!email || !pw) return gateMsg('Enter your email and password', true);
+  try {
+    gateMsg('Signing in…');
+    const res = await API.login(email, pw);
+    S.currentUser = res.user;
+    await enterApp();
+    toast(`Welcome, ${res.user?.name || 'User'}`, 's');
+  } catch (e) { gateMsg(e.message, true); }
+}
+async function submitRegister() {
+  const name = g('regName'), email = g('regEmail'), pw = g('regPassword');
+  if (!name || !email || !pw) return gateMsg('Please fill in all fields', true);
+  if (pw.length < 6) return gateMsg('Password must be at least 6 characters', true);
+  try {
+    gateMsg('Creating account…');
+    const res = await API.register(name, email, pw);
+    S.currentUser = res.user;
+    await enterApp();
+    toast(`Welcome, ${res.user?.name || 'User'}`, 's');
+  } catch (e) { gateMsg(e.message, true); }
+}
+
+async function enterApp() {
+  hideAuthGate();
+  gateMsg('');
+  applyRoleUI();
+  updateUserChip();
+  updateConnectionBadge();
+  await loadLeads();
+}
+
+async function doLogout() {
+  try {
+    if (BACKEND_ONLINE && AUTH_TOKEN) {
+      await fetch(`${BACKEND_URL}/api/auth/logout`, { method: 'POST', headers: API._headers() }).catch(() => {});
+    }
+  } finally {
+    AUTH_TOKEN = null;
+    localStorage.removeItem('cosmos_auth_token');
+    S.currentUser = null;
+    S.leads = []; S.duplicates = [];
+    renderAll();
+    showAuthGate();
+    switchAuthTab('login');
+    toast('Logged out', 's');
+  }
+}
+
+function isAdmin() { return S.currentUser?.role === 'ADMIN'; }
+
+function applyRoleUI() {
+  const navTeam = document.getElementById('navTeam');
+  if (navTeam) navTeam.style.display = isAdmin() ? '' : 'none';
+}
+
+function updateUserChip() {
+  const uc = document.getElementById('userChip');
+  const lo = document.getElementById('logoutBtn');
+  if (S.currentUser) {
+    if (uc) {
+      uc.style.display = '';
+      uc.querySelector('.uc-name').textContent = S.currentUser.name || S.currentUser.email;
+      uc.querySelector('.uc-role').textContent = isAdmin() ? 'Super Admin' : 'Employee';
+    }
+    if (lo) lo.style.display = '';
+  } else {
+    if (uc) uc.style.display = 'none';
+    if (lo) lo.style.display = 'none';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TEAM REPORT (super-admin)
+══════════════════════════════════════════════════════════ */
+async function loadTeamReport() {
+  const body = document.getElementById('teamBody');
+  const summary = document.getElementById('teamSummary');
+  const badge = document.getElementById('teamTotalBadge');
+  if (!body) return;
+  if (!(BACKEND_ONLINE && isAdmin())) {
+    body.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:30px;color:var(--w3)">Super-admin only</td></tr>';
+    if (summary) summary.innerHTML = '';
+    return;
+  }
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/reports/employees`, { headers: API._headers() });
+    if (!r.ok) throw new Error(`Failed (${r.status})`);
+    const rows = await r.json();
+    if (!Array.isArray(rows) || !rows.length) {
+      body.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:30px;color:var(--w3)">No leads generated yet</td></tr>';
+      if (summary) summary.innerHTML = '';
+      if (badge) badge.textContent = '0';
+      return;
+    }
+    // Per-employee totals (across all dates).
+    const totals = {};
+    let grand = 0;
+    for (const x of rows) { totals[x.name] = (totals[x.name] || 0) + x.count; grand += x.count; }
+    if (badge) badge.textContent = grand;
+    if (summary) {
+      summary.innerHTML = Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([name, n]) =>
+        `<div class="team-emp"><i class="fa-solid fa-user" style="color:var(--w3);font-size:11px"></i><span class="te-name">${esc(name)}</span><span class="te-count">${n}</span></div>`
+      ).join('');
+    }
+    body.innerHTML = rows.map(x =>
+      `<tr><td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${fmtDate(x.date)}</td><td>${esc(x.name)} <span style="color:var(--w3);font-size:10px;font-family:var(--mono)">${esc(x.email)}</span></td><td style="text-align:right;font-family:var(--mono);color:var(--teal);font-weight:700">${x.count}</td></tr>`
+    ).join('');
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:30px;color:var(--rose)">${esc(e.message)}</td></tr>`;
   }
 }
 
@@ -1834,7 +2069,8 @@ const PAGE_TITLES = {
   leads:     ['All Leads', 'Browse, filter and manage extracted leads'],
   duplicates:['Duplicate Detection', 'Review and resolve duplicate leads'],
   export:    ['Export to Cosmos CRM', 'Download leads as Cosmos-format CSV'],
-  settings:  ['Settings', 'Configure Claude API key and export defaults'],
+  team:      ['Team Lead Report', 'Leads generated by each employee, by date'],
+  settings:  ['Settings', 'Configure API key and export defaults'],
 };
 
 function switchPage(page) {
@@ -1843,13 +2079,14 @@ function switchPage(page) {
   closeSidebar();
   const pgEl = document.getElementById('pg-'+page);
   if (pgEl) pgEl.classList.add('active');
-  const titles = PAGE_TITLES[page] || ['Cosmos Lead Intelligence Platform',''];
+  const titles = PAGE_TITLES[page] || ['Cosmos Impex',''];
   document.getElementById('pageTitle').textContent = titles[0];
   document.getElementById('pageSubtitle').textContent = titles[1];
   if (page==='settings') renderSettingsPage();
   if (page==='export')   { renderExportPreview(); const eb=document.getElementById('expBranch'); const ea=document.getElementById('expAssigned'); if(eb&&!eb.value) eb.value=S.defaults.salesBranch||''; if(ea&&!ea.value) ea.value=S.defaults.assignedTo||''; }
   if (page==='leads')    renderTable('allLeadsBody', S.page.all);
   if (page==='duplicates') loadDuplicates();
+  if (page==='team') loadTeamReport();
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1890,18 +2127,6 @@ function toast(msg, type='i', dur=3500) {
    INIT
 ══════════════════════════════════════════════════════════ */
 async function init() {
-  // Reuse a stored token across refreshes instead of logging in every time.
-  // The login endpoint is rate-limited, so repeated logins trip "too many
-  // attempts". Only log in here when there is no token at all; an expired
-  // token is detected and refreshed in initBackendConnection().
-  if (!AUTH_TOKEN) {
-    try {
-      await API.login(DEMO_EMAIL, DEMO_PASSWORD);
-    } catch (e) {
-      console.warn('Auto-login failed:', e.message);
-    }
-  }
-
   // Sidebar nav
   document.querySelectorAll('.sb-item').forEach(el => {
     el.addEventListener('click', () => switchPage(el.dataset.page));
@@ -1927,16 +2152,18 @@ async function init() {
     document.getElementById(id)?.addEventListener('change', e => { addFilesToQueue([...e.target.files]); e.target.value=''; });
   });
 
-  // Connect to the backend FIRST so leads load from the database (source of
-  // truth). Loading the stale IndexedDB copy first made approved leads
-  // reappear as Extracted after a refresh.
+  // Connect to the backend and validate any stored token.
   await initBackendConnection();
 
-  // Load data
-  await loadLeads();
+  // Auth gate: enter the app if we have a valid session, otherwise show login.
+  if (BACKEND_ONLINE && AUTH_TOKEN && S.currentUser) {
+    await enterApp();
+  } else {
+    showAuthGate();
+    switchAuthTab('login');
+  }
 
-  console.log('%cCosmos Lead Intelligence Platform v2.0', 'color:#00c4cc;font-weight:bold;font-size:14px');
-  console.log(`%cBackend: ${BACKEND_ONLINE ? '✅ Connected' : '○ Standalone mode'}`, 'color:#22c55e;font-size:11px');
+  console.log('%cCosmos Impex — Lead Intelligence', 'color:#2f6bff;font-weight:bold;font-size:14px');
 }
 
 if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
