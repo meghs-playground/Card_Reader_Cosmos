@@ -492,7 +492,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
                 <th style="width:32px"><input type="checkbox" class="cb" id="selectAllDash" onchange="toggleAll('dashBody',this)"></th>
                 <th>Card</th><th>Contact Person</th><th>Company Name</th>
                 <th>Designation</th><th>Mobile</th><th>Email</th><th>City</th>
-                <th>Status</th><th>Actions</th>
+                <th>Date</th><th>Status</th><th>Actions</th>
               </tr></thead>
               <tbody id="dashBody"></tbody>
             </table>
@@ -586,7 +586,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
               <th style="width:32px"><input type="checkbox" class="cb" onchange="toggleAll('allLeadsBody',this)"></th>
               <th>Card</th><th>Contact Person</th><th>Company Name</th>
               <th>Designation</th><th>Mobile</th><th>Email</th>
-              <th>City</th><th>State</th><th>GSTIN</th><th>Status</th><th>Actions</th>
+              <th>City</th><th>State</th><th>GSTIN</th><th>Date</th><th>Status</th><th>Actions</th>
             </tr></thead>
             <tbody id="allLeadsBody"></tbody>
           </table>
@@ -800,6 +800,21 @@ const API = {
     return r.json();
   },
 
+  async getDuplicates() {
+    const r = await fetch(`${BACKEND_URL}/api/duplicates`, { headers: this._headers() });
+    if (!r.ok) throw new Error('Failed to fetch duplicates');
+    return r.json();
+  },
+
+  async mergeDuplicate(keepId, mergeId) {
+    const r = await fetch(`${BACKEND_URL}/api/duplicates/merge`, {
+      method: 'POST', headers: this._headers(), body: JSON.stringify({ keepId, mergeId }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Merge failed');
+    return data;
+  },
+
   async updateLead(id, fields) {
     const r = await fetch(`${BACKEND_URL}/api/leads/${id}`, {
       method: 'PUT', headers: this._headers(), body: JSON.stringify(fields),
@@ -959,6 +974,8 @@ async function loadLeads() {
     S.leads = await IDB.all().catch(() => []);
   }
   renderAll();
+  // Refresh the backend-detected duplicate list alongside leads.
+  if (BACKEND_ONLINE) loadDuplicates();
 }
 async function persistLead(lead) {
   await IDB.put(lead);
@@ -974,6 +991,39 @@ async function deleteLead(id) {
   await IDB.del(id);
   S.leads = S.leads.filter(l => l._id !== id);
   renderAll();
+}
+
+// Flatten a backend lead (with contacts) into the fields the dup card shows.
+function dispLead(l) {
+  if (!l) return { id: null, company: '?', contactName: '?', email: '', mobile: '' };
+  const pc = (l.contacts || []).find(c => c.isPrimary) || (l.contacts || [])[0] || {};
+  return {
+    id: l.id,
+    company: l.companyName || '?',
+    contactName: pc.fullName || '?',
+    email: pc.email || l.email || '',
+    mobile: pc.mobile || pc.phone || l.phonePrimary || '',
+  };
+}
+
+// Pull the duplicate pairs the BACKEND detected (the bug: this was never called,
+// so the page always showed "No duplicates detected" even with dupes in the DB).
+async function loadDuplicates() {
+  if (!BACKEND_ONLINE) { renderDuplicates(); return; }
+  try {
+    const items = await API.getDuplicates();
+    S.duplicates = (Array.isArray(items) ? items : []).map(d => ({
+      id: d.id,
+      score: d.score,
+      reasons: d.reasons || [],
+      a: dispLead(d.leadA),
+      b: dispLead(d.leadB),
+    }));
+  } catch (e) {
+    console.warn('loadDuplicates:', e.message);
+  }
+  renderDuplicates();
+  updateStats();
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1326,6 +1376,13 @@ function renderAll() {
   updateStats();
 }
 
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '—';
+  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function renderTable(tbodyId, page = 1) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
@@ -1354,6 +1411,7 @@ function renderTable(tbodyId, page = 1) {
       <td style="color:var(--teal);font-family:var(--mono);font-size:11px" title="${esc(lead.email)}">${esc(lead.email)||'—'}</td>
       <td>${esc(lead.city)||'—'}</td>
       ${extraCols}
+      <td style="font-family:var(--mono);font-size:10px;white-space:nowrap">${fmtDate(lead.createdAt)}</td>
       <td><span class="status-badge ${statusClass}">${lead.status}</span></td>
       <td><div class="action-btns">
         <button class="act-btn" title="Edit" onclick="openEdit('${lead._id}')"><i class="fa-solid fa-pen"></i></button>
@@ -1486,22 +1544,36 @@ function renderDuplicates() {
   if (!el) return;
   if (!S.duplicates.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--w3);font-family:var(--mono);font-size:12px"><i class="fa-solid fa-copy" style="font-size:28px;display:block;margin-bottom:10px;opacity:.3"></i>No duplicates detected</div>'; return; }
   el.innerHTML = S.duplicates.map((dup,i) => {
-    const ex = S.leads.find(l=>l._id===dup.a);
-    const nw = dup.lead;
+    const a = dup.a || {}, b = dup.b || {};
+    const pct = dup.score ? `${Math.round(dup.score*100)}%` : '';
+    const why = (dup.reasons || []).join(', ');
     return `<div class="dup-card">
-      <div class="dup-field"><div class="dup-label">Existing Lead</div><div class="dup-val">${esc(ex?.contactName||'?')} · ${esc(ex?.company||'?')}</div><div style="font-size:10px;color:var(--w3);font-family:var(--mono)">${esc(ex?.email||'')} ${esc(ex?.mobile||'')}</div></div>
-      <div style="color:var(--w3);font-size:18px">≈</div>
-      <div class="dup-field"><div class="dup-label">New Duplicate</div><div class="dup-val">${esc(nw.contactName||nw.company||'?')}</div><div style="font-size:10px;color:var(--w3);font-family:var(--mono)">${esc(nw.email||'')} ${esc(nw.mobile||'')}</div></div>
+      <div class="dup-field"><div class="dup-label">Lead A (kept)</div><div class="dup-val">${esc(a.contactName)} · ${esc(a.company)}</div><div style="font-size:10px;color:var(--w3);font-family:var(--mono)">${esc(a.email)} ${esc(a.mobile)}</div></div>
+      <div style="text-align:center;color:var(--w3);flex-shrink:0"><div style="font-size:18px">≈</div><div style="font-family:var(--mono);font-size:11px">${pct}</div><div style="font-size:9px;max-width:130px;line-height:1.3">${esc(why)}</div></div>
+      <div class="dup-field"><div class="dup-label">Lead B (merged away)</div><div class="dup-val">${esc(b.contactName)} · ${esc(b.company)}</div><div style="font-size:10px;color:var(--w3);font-family:var(--mono)">${esc(b.email)} ${esc(b.mobile)}</div></div>
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button style="padding:5px 10px;background:var(--teal2);border:1px solid var(--bdr2);border-radius:var(--r);color:var(--teal);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans)" onclick="mergeDup(${i})">Merge</button>
-        <button style="padding:5px 10px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);border-radius:var(--r);color:var(--green);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans)" onclick="saveAnyway(${i})">Save Anyway</button>
         <button style="padding:5px 10px;background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w3);font-size:11px;cursor:pointer;font-family:var(--sans)" onclick="skipDup(${i})">Skip</button>
       </div>
     </div>`;
   }).join('');
 }
 
-async function mergeDup(i) { skipDup(i); toast('Leads merged (existing kept)', 's'); }
+async function mergeDup(i) {
+  const dup = S.duplicates[i];
+  if (!dup) return;
+  try {
+    if (BACKEND_ONLINE && AUTH_TOKEN && dup.a?.id && dup.b?.id) {
+      await API.mergeDuplicate(dup.a.id, dup.b.id);
+    }
+    S.duplicates.splice(i, 1);
+    renderDuplicates(); updateStats();
+    toast('Leads merged (Lead A kept)', 's');
+    if (BACKEND_ONLINE) loadLeads();
+  } catch (e) {
+    toast('Merge failed: ' + e.message, 'e');
+  }
+}
 async function saveAnyway(i) {
   const dup = S.duplicates[i];
   const lead = { ...dup.lead, _id:'l'+Date.now()+'_'+Math.random().toString(36).slice(2,7) };
@@ -1667,7 +1739,7 @@ function switchPage(page) {
   if (page==='settings') renderSettingsPage();
   if (page==='export')   { renderExportPreview(); const eb=document.getElementById('expBranch'); const ea=document.getElementById('expAssigned'); if(eb&&!eb.value) eb.value=S.defaults.salesBranch||''; if(ea&&!ea.value) ea.value=S.defaults.assignedTo||''; }
   if (page==='leads')    renderTable('allLeadsBody', S.page.all);
-  if (page==='duplicates') renderDuplicates();
+  if (page==='duplicates') loadDuplicates();
 }
 
 /* ══════════════════════════════════════════════════════════
