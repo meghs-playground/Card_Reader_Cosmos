@@ -51,6 +51,11 @@ async function listLeads(req, res, next) {
   try {
     const { status, q, take = 50, skip = 0 } = req.query;
     const where = {};
+    // Employees (non-admin) see only the leads they scanned. The owner is the
+    // user who uploaded the lead's source card. ADMIN (super-admin) sees all.
+    if (req.user && req.user.role !== "ADMIN") {
+      where.card = { upload: { uploadedById: req.user.sub } };
+    }
     if (status) where.status = status;
     if (q) {
       where.OR = [

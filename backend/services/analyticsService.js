@@ -152,4 +152,28 @@ async function reports(prisma) {
   };
 }
 
-module.exports = { dashboard, reports };
+/**
+ * Per-employee lead generation, grouped by employee and date.
+ * The owner of a lead is whoever uploaded its source card. Prisma groupBy can't
+ * traverse relations, so this uses a parameter-free raw query (no user input
+ * interpolated — safe).
+ * Returns rows: { userId, name, email, date (YYYY-MM-DD), count }.
+ */
+async function employeeReport(prisma) {
+  const rows = await prisma.$queryRaw`
+    SELECT u.id   AS "userId",
+           u.name AS "name",
+           u.email AS "email",
+           to_char(l."createdAt", 'YYYY-MM-DD') AS "date",
+           COUNT(*)::int AS "count"
+    FROM leads l
+    JOIN cards   c  ON c.id  = l."cardId"
+    JOIN uploads up ON up.id = c."uploadId"
+    JOIN users   u  ON u.id  = up."uploadedById"
+    GROUP BY u.id, u.name, u.email, to_char(l."createdAt", 'YYYY-MM-DD')
+    ORDER BY "date" DESC, "count" DESC
+  `;
+  return rows;
+}
+
+module.exports = { dashboard, reports, employeeReport };

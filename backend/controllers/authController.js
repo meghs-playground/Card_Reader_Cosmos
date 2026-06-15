@@ -62,6 +62,42 @@ async function login(req, res, next) {
 }
 
 /**
+ * POST /api/auth/register
+ * Body: { name, email, password }
+ * Self-signup for employees. New accounts get the REVIEWER (employee) role and
+ * can scan + see/download only their own leads. The seeded ADMIN is the
+ * super-admin. Returns a token so the client is logged in immediately.
+ */
+async function register(req, res, next) {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Name, email and password are required" });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+    const normEmail = String(email).toLowerCase().trim();
+    const existing = await prisma.user.findUnique({ where: { email: normEmail } });
+    if (existing) {
+      return res.status(409).json({ error: "An account with this email already exists" });
+    }
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { name: String(name).trim(), email: normEmail, passwordHash, role: "REVIEWER", isActive: true },
+    });
+    const token = signToken(user);
+    audit(req, "AUTH_REGISTER", "User", user.id).catch(() => {});
+    return res.status(201).json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
  * POST /api/auth/logout
  * Stateless JWT — just acknowledge. Client must discard token.
  */
@@ -96,4 +132,4 @@ async function me(req, res, next) {
   }
 }
 
-module.exports = { login, logout, me };
+module.exports = { login, register, logout, me };

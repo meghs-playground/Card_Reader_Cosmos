@@ -7,5 +7,8 @@ async function getDashboard(req, res, next) {
 async function getReports(req, res, next) {
   try { res.json(await analytics.reports(prisma)); } catch (e) { next(e); }
 }
+async function getEmployeeReport(req, res, next) {
+  try { res.json(await analytics.employeeReport(prisma)); } catch (e) { next(e); }
+}
 
-module.exports = { getDashboard, getReports };
+module.exports = { getDashboard, getReports, getEmployeeReport };

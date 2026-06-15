@@ -623,6 +623,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
               <option value="Extracted">Extracted Only</option>
             </select>
           </div>
+          <div class="exp-row"><div class="exp-label">From Date</div>
+            <input class="exp-in" id="expFrom" type="date">
+          </div>
+          <div class="exp-row"><div class="exp-label">To Date</div>
+            <input class="exp-in" id="expTo" type="date">
+          </div>
           <div class="exp-row"><div class="exp-label">Sales Branch</div>
             <input class="exp-in" id="expBranch" placeholder="e.g. West - Ahmedabad">
           </div>
@@ -1392,14 +1398,33 @@ function buildCosmosRows(statusFilter) {
   return rows;
 }
 
-function doExport() {
+async function doExport() {
   const statusFilter = document.getElementById('expStatus')?.value || 'all';
+  const from = document.getElementById('expFrom')?.value || '';
+  const to   = document.getElementById('expTo')?.value || '';
   if (BACKEND_ONLINE) {
-    // Pass the status filter through — "Approved Only" must export only
-    // APPROVED leads, not every non-rejected lead.
-    const qs = statusFilter !== 'all' ? `?status=${encodeURIComponent(statusFilter)}` : '';
-    window.location.href = `${BACKEND_URL}/api/export/csv${qs}`;
-    toast('Downloading CSV…', 's');
+    // Export is now behind auth, so a plain window.location navigation can't send
+    // the token — fetch it as a blob with the Authorization header instead.
+    const params = new URLSearchParams();
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    try {
+      toast('Preparing CSV…', 'i');
+      const r = await fetch(`${BACKEND_URL}/api/export/csv${qs}`, { headers: API._headers() });
+      if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'Please log in to export' : `Export failed (${r.status})`);
+      const blob = await r.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const stamp = [from || 'all', to || 'all'].join('_to_');
+      a.download = `cosmos_leads_${stamp}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      toast('CSV downloaded', 's');
+    } catch (e) {
+      toast(e.message, 'e');
+    }
     return;
   }
   const rows = buildCosmosRows(statusFilter);

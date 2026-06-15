@@ -35,42 +35,56 @@ const router = express.Router();
 
 // ---- Public routes (no auth required) ----
 router.post("/auth/login", auth.login);
+router.post("/auth/register", auth.register); // employee self-signup
+
+// ============================================================================
+// Everything below requires a valid token. Each request now carries req.user,
+// which drives per-employee scoping (employees see only their own leads) and
+// attribution (uploads are tagged with the uploader).
+// ============================================================================
+router.use(authenticate);
+
+// ---- Auth ----
+router.post("/auth/logout", auth.logout);
+router.get("/auth/me", auth.me);
+
+// ---- Upload + processing ----
 router.post("/upload", uploadMw.array("files", 200), upload.createUpload);
 router.get("/uploads", upload.listQueue);
 router.get("/uploads/:id", upload.getUpload);
+router.post("/uploads/:id/reprocess", upload.reprocessUpload);
+
+// ---- Leads (read scoped to owner for non-admins, in the controller) ----
 router.get("/leads", lead.listLeads);
 router.get("/leads/:id", lead.getLead);
-router.get("/duplicates", dup.list);
-router.get("/analytics", analytics.getDashboard);
-router.get("/reports", analytics.getReports);
-router.get("/export/csv", exp.csv);
-router.get("/export/xlsx", exp.xlsx);
-router.get("/export/json", exp.json);
 router.delete("/leads/:id", lead.remove);
-router.post("/uploads/:id/reprocess", upload.reprocessUpload);
-router.get("/debug", debug.dbStats);
-router.get("/debug/test-lead", debug.createTestLead);
-router.get("/debug/test-tx-lead", debug.testTransactionLead);
-router.get("/debug/test-full-tx", debug.testFullPipelineTx);
-router.get("/debug/simulate/:id", debug.simulateProcessing);
-
-// Everything below requires a valid token.
-router.use(authenticate);
-
-// ---- Auth (authenticated) ----
-router.post("/auth/logout", authenticate, auth.logout);
-router.get("/auth/me", authenticate, auth.me);
-
-// ---- Leads write operations (authenticated + role check) ----
 router.put("/leads/:id", authorize("ADMIN", "REVIEWER"), lead.updateLead);
 router.post("/leads/approve", authorize("ADMIN", "REVIEWER"), lead.approve);    // body: { ids: [] }
 router.post("/leads/:id/approve", authorize("ADMIN", "REVIEWER"), lead.approve);
 router.post("/leads/reject", authorize("ADMIN", "REVIEWER"), lead.reject);      // body: { ids: [] }
 router.post("/leads/:id/reject", authorize("ADMIN", "REVIEWER"), lead.reject);
 
-// ---- Duplicates write operations (authenticated + role check) ----
+// ---- Duplicates ----
+router.get("/duplicates", dup.list);
 router.post("/duplicates/scan", authorize("ADMIN", "REVIEWER"), dup.scan);
 router.post("/duplicates/merge", authorize("ADMIN", "REVIEWER"), dup.merge);
 router.post("/duplicates/dismiss", authorize("ADMIN", "REVIEWER"), dup.dismiss);
+
+// ---- Analytics / reports ----
+router.get("/analytics", analytics.getDashboard);
+router.get("/reports", analytics.getReports);
+router.get("/reports/employees", authorize("ADMIN"), analytics.getEmployeeReport); // super-admin only
+
+// ---- Export (scoped to owner for non-admins, in the controller) ----
+router.get("/export/csv", exp.csv);
+router.get("/export/xlsx", exp.xlsx);
+router.get("/export/json", exp.json);
+
+// ---- Debug (admin only) ----
+router.get("/debug", authorize("ADMIN"), debug.dbStats);
+router.get("/debug/test-lead", authorize("ADMIN"), debug.createTestLead);
+router.get("/debug/test-tx-lead", authorize("ADMIN"), debug.testTransactionLead);
+router.get("/debug/test-full-tx", authorize("ADMIN"), debug.testFullPipelineTx);
+router.get("/debug/simulate/:id", authorize("ADMIN"), debug.simulateProcessing);
 
 module.exports = router;

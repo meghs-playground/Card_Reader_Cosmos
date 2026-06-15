@@ -12,6 +12,22 @@ async function buildAndStream(req, res, next, format) {
     }
     if (req.query.source) where.source = req.query.source;
 
+    // Employees export only the leads they scanned; ADMIN exports everyone's.
+    if (req.user && req.user.role !== "ADMIN") {
+      where.card = { upload: { uploadedById: req.user.sub } };
+    }
+
+    // Optional date range (date-wise CSV). `to` is inclusive of the whole day.
+    if (req.query.from || req.query.to) {
+      where.createdAt = {};
+      if (req.query.from) where.createdAt.gte = new Date(req.query.from);
+      if (req.query.to) {
+        const t = new Date(req.query.to);
+        t.setHours(23, 59, 59, 999);
+        where.createdAt.lte = t;
+      }
+    }
+
     const leads = await prisma.lead.findMany({
       where,
       include: { contacts: true, company: true },
