@@ -55,7 +55,7 @@ const generalLimiter = rateLimit({
 // Strict limiter for auth endpoints (brute-force protection)
 const authLimiter = rateLimit({
   windowMs,
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || "10", 10),
+  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || "30", 10),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many login attempts, please try again later." },
@@ -113,7 +113,10 @@ app.get("/health", async (_, res) => {
 });
 
 // ── Routes with per-route rate limiting ──────────────────────────────────────
-app.use("/api/auth", authLimiter);
+// Only the login endpoint is brute-force sensitive — limit just that, so that
+// /auth/me and /auth/logout (called on normal page loads) don't burn the budget
+// and trip "too many attempts" during regular use.
+app.use("/api/auth/login", authLimiter);
 app.use("/api/upload", uploadLimiter);
 app.use("/api/export", exportLimiter);
 app.use("/api", generalLimiter, routes);

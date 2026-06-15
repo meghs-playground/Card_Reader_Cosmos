@@ -915,15 +915,16 @@ async function initBackendConnection() {
       }, 10000);
     })();
   }
-  // Token validation is optional — read/upload work without auth
-  if (BACKEND_ONLINE && AUTH_TOKEN) {
-    const user = await API.me().catch(() => null);
-    if (user) {
-      S.currentUser = user;
-    } else {
+  // Validate the stored token; only log in when it is missing or expired.
+  if (BACKEND_ONLINE) {
+    let user = AUTH_TOKEN ? await API.me().catch(() => null) : null;
+    if (!user) {
       AUTH_TOKEN = null;
       localStorage.removeItem('cosmos_auth_token');
+      try { await API.login(DEMO_EMAIL, DEMO_PASSWORD); } catch (_) {}
+      user = AUTH_TOKEN ? await API.me().catch(() => null) : null;
     }
+    if (user) S.currentUser = user;
   }
   updateConnectionBadge();
 }
@@ -1864,10 +1865,16 @@ function toast(msg, type='i', dur=3500) {
    INIT
 ══════════════════════════════════════════════════════════ */
 async function init() {
-  try {
-    await API.login(DEMO_EMAIL, DEMO_PASSWORD);
-  } catch (e) {
-    console.warn('Auto-login failed:', e.message);
+  // Reuse a stored token across refreshes instead of logging in every time.
+  // The login endpoint is rate-limited, so repeated logins trip "too many
+  // attempts". Only log in here when there is no token at all; an expired
+  // token is detected and refreshed in initBackendConnection().
+  if (!AUTH_TOKEN) {
+    try {
+      await API.login(DEMO_EMAIL, DEMO_PASSWORD);
+    } catch (e) {
+      console.warn('Auto-login failed:', e.message);
+    }
   }
 
   // Sidebar nav
