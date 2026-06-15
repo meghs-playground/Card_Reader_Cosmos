@@ -486,6 +486,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
             </select>
             <button class="approve-btn" onclick="approveAll()">Approve All (<span id="approveCount">0</span>)</button>
           </div>
+          <div id="leadsByDate" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px"></div>
           <div style="overflow-x:auto;max-height:360px;overflow-y:auto">
             <table class="leads-table">
               <thead><tr>
@@ -1370,6 +1371,7 @@ function doExport() {
 function renderAll() {
   renderTable('dashBody', S.page.dash);
   renderTable('allLeadsBody', S.page.all);
+  renderLeadsByDate();
   renderAnalytics();
   renderDuplicates();
   renderExportPreview();
@@ -1383,12 +1385,34 @@ function fmtDate(d) {
   return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// "Leads by date" summary chips — how many leads were generated on each date.
+function renderLeadsByDate() {
+  const el = document.getElementById('leadsByDate');
+  if (!el) return;
+  const counts = {}; // ISO date (YYYY-MM-DD) -> count
+  for (const l of S.leads) {
+    const raw = l.createdAt || l.created_at;
+    if (!raw) continue;
+    const dt = new Date(raw);
+    if (isNaN(dt.getTime())) continue;
+    const key = dt.toISOString().slice(0, 10);
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  const entries = Object.entries(counts).sort((a, b) => b[0].localeCompare(a[0])); // newest date first
+  if (!entries.length) { el.innerHTML = ''; return; }
+  el.innerHTML =
+    '<span style="font-size:10px;color:var(--w3);align-self:center;margin-right:2px">Leads by date:</span>' +
+    entries.map(([iso, n]) =>
+      `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--w2)">${fmtDate(iso)}<span style="background:var(--teal2);color:var(--teal);border-radius:8px;padding:0 6px;font-weight:700;font-family:var(--mono)">${n}</span></span>`
+    ).join('');
+}
+
 function renderTable(tbodyId, page = 1) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
-  // Most recently updated first — a just-approved or just-scanned lead shows
-  // at the first position on page 1 instead of landing on the last page.
-  const ts = l => new Date(l.updatedAt || l.createdAt || 0).getTime() || 0;
+  // Sort strictly by generation date (newest-generated first), so the Date
+  // column reads in clean order and leads group by the day they were created.
+  const ts = l => new Date(l.createdAt || l.created_at || 0).getTime() || 0;
   const leads = [...S.leads].sort((a, b) => ts(b) - ts(a));
   const start = (page-1) * S.perPage;
   const slice = leads.slice(start, start + S.perPage);
