@@ -14,6 +14,7 @@ const dup = require("../controllers/duplicateController");
 const exp = require("../controllers/exportController");
 const analytics = require("../controllers/analyticsController");
 const auth = require("../controllers/authController");
+const users = require("../controllers/userController");
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.resolve("uploads/raw");
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -47,6 +48,11 @@ router.use(authenticate);
 // ---- Auth ----
 router.post("/auth/logout", auth.logout);
 router.get("/auth/me", auth.me);
+router.post("/auth/change-password", auth.changePassword);
+
+// ---- User management (super-admin only) ----
+router.get("/users", authorize("ADMIN"), users.list);
+router.post("/users/:id", authorize("ADMIN"), users.update);
 
 // ---- Upload + processing ----
 router.post("/upload", uploadMw.array("files", 200), upload.createUpload);

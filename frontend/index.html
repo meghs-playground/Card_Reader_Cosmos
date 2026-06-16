@@ -71,8 +71,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
 .auth-tab.active{background:var(--teal);color:#fff}
 .auth-field{margin-bottom:13px}
 .auth-field label{display:block;font-size:11px;color:var(--w2);margin-bottom:6px;font-weight:500}
-.auth-field input{width:100%;padding:12px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w1);font-size:14px;font-family:var(--sans)}
-.auth-field input:focus{outline:none;border-color:var(--teal)}
+.auth-field input,.auth-field select{width:100%;padding:12px;background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r);color:var(--w1);font-size:14px;font-family:var(--sans)}
+.auth-field input:focus,.auth-field select:focus{outline:none;border-color:var(--teal)}
 .auth-btn{width:100%;padding:13px;background:var(--teal);border:none;border-radius:var(--r);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;transition:var(--t)}
 .auth-btn:hover{filter:brightness(1.12)}
 .auth-msg{font-size:12px;text-align:center;margin-top:13px;min-height:16px;color:var(--w2)}
@@ -364,7 +364,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
     <div id="registerForm" style="display:none">
       <div class="auth-field"><label>Full Name</label><input id="regName" placeholder="Your name"></div>
       <div class="auth-field"><label>Email</label><input id="regEmail" type="email" autocomplete="username" placeholder="you@cosmos.in"></div>
-      <div class="auth-field"><label>Password</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="At least 6 characters" onkeydown="if(event.key==='Enter')submitRegister()"></div>
+      <div class="auth-field"><label>Password</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="At least 6 characters"></div>
+      <div class="auth-field"><label>Account Type</label>
+        <select id="regRole" onchange="toggleAdminCode()">
+          <option value="REVIEWER">Employee</option>
+          <option value="ADMIN">Super Admin</option>
+        </select>
+      </div>
+      <div class="auth-field" id="adminCodeField" style="display:none"><label>Super-Admin Code</label><input id="regAdminCode" type="password" placeholder="Code from your administrator" onkeydown="if(event.key==='Enter')submitRegister()"></div>
       <button class="auth-btn" onclick="submitRegister()">Create Account</button>
     </div>
     <div class="auth-msg" id="authMsg"></div>
@@ -436,6 +443,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
     <div class="sb-item" data-page="duplicates"><i class="fa-solid fa-copy"></i>Duplicates<span class="sb-badge orange" id="dupBadge">0</span></div>
     <div class="sb-item" data-page="export"><i class="fa-solid fa-download"></i>Export Data</div>
     <div class="sb-item" data-page="team" id="navTeam" style="display:none"><i class="fa-solid fa-user-group"></i>Team Report</div>
+    <div class="sb-item" data-page="users" id="navUsers" style="display:none"><i class="fa-solid fa-users-gear"></i>Users</div>
     <div class="sb-item" data-page="settings"><i class="fa-solid fa-gear"></i>Settings</div>
   </nav>
   <div class="sb-footer">Cosmos Impex India Pvt Ltd<br>Lead Intelligence Platform<br><span style="color:var(--teal);font-size:8px">CNC Manufacturer since 1987</span></div>
@@ -723,6 +731,23 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
     </div>
 
     <!-- ══ SETTINGS PAGE ══ -->
+    <!-- ══ USERS (super-admin) ══ -->
+    <div id="pg-users" class="pg">
+      <div class="leads-panel">
+        <div class="leads-toolbar">
+          <div class="leads-title">User Management <span class="count-badge" id="usersBadge">0</span></div>
+          <button class="approve-btn" onclick="loadUsers()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="leads-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Uploads</th><th>Actions</th></tr></thead>
+            <tbody id="usersBody"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--w3)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="hint" style="margin-top:10px">Deactivated users cannot log in. Promote an employee to Super Admin to give them full access.</div>
+      </div>
+    </div>
+
     <!-- ══ TEAM REPORT (super-admin) ══ -->
     <div id="pg-team" class="pg">
       <div class="leads-panel">
@@ -750,6 +775,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
             </div>
             <div class="hint">Stored in browser localStorage only. Never sent to any server other than Anthropic. Never committed to source code.</div>
             <button class="set-btn" style="margin-top:10px" onclick="saveDefaults()">Save Key</button>
+          </div>
+          <div class="set-panel">
+            <div class="set-title">Change Password</div>
+            <div class="set-row"><div class="set-label">Current Password</div>
+              <input class="set-input" id="cpCurrent" type="password" placeholder="Current password">
+            </div>
+            <div class="set-row"><div class="set-label">New Password</div>
+              <input class="set-input" id="cpNew" type="password" placeholder="At least 6 characters">
+            </div>
+            <button class="set-btn" style="margin-top:10px" onclick="doChangePassword()">Update Password</button>
           </div>
         </div>
         <div class="set-panel">
@@ -878,11 +913,11 @@ const API = {
     return data;
   },
 
-  async register(name, email, password) {
+  async register(name, email, password, role, adminCode) {
     const r = await fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, role, adminCode }),
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Registration failed');
@@ -1079,13 +1114,22 @@ async function submitLogin() {
     toast(`Welcome, ${res.user?.name || 'User'}`, 's');
   } catch (e) { gateMsg(e.message, true); }
 }
+function toggleAdminCode() {
+  const role = document.getElementById('regRole')?.value;
+  const f = document.getElementById('adminCodeField');
+  if (f) f.style.display = role === 'ADMIN' ? '' : 'none';
+}
+
 async function submitRegister() {
   const name = g('regName'), email = g('regEmail'), pw = g('regPassword');
+  const role = document.getElementById('regRole')?.value || 'REVIEWER';
+  const adminCode = g('regAdminCode');
   if (!name || !email || !pw) return gateMsg('Please fill in all fields', true);
   if (pw.length < 6) return gateMsg('Password must be at least 6 characters', true);
+  if (role === 'ADMIN' && !adminCode) return gateMsg('Enter the super-admin code', true);
   try {
     gateMsg('Creating account…');
-    const res = await API.register(name, email, pw);
+    const res = await API.register(name, email, pw, role, adminCode);
     S.currentUser = res.user;
     await enterApp();
     toast(`Welcome, ${res.user?.name || 'User'}`, 's');
@@ -1121,8 +1165,96 @@ async function doLogout() {
 function isAdmin() { return S.currentUser?.role === 'ADMIN'; }
 
 function applyRoleUI() {
+  const show = isAdmin() ? '' : 'none';
   const navTeam = document.getElementById('navTeam');
-  if (navTeam) navTeam.style.display = isAdmin() ? '' : 'none';
+  const navUsers = document.getElementById('navUsers');
+  if (navTeam) navTeam.style.display = show;
+  if (navUsers) navUsers.style.display = show;
+}
+
+/* ══════════════════════════════════════════════════════════
+   USER MANAGEMENT (super-admin)
+══════════════════════════════════════════════════════════ */
+async function loadUsers() {
+  const body = document.getElementById('usersBody');
+  const badge = document.getElementById('usersBadge');
+  if (!body) return;
+  if (!(BACKEND_ONLINE && isAdmin())) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--w3)">Super-admin only</td></tr>';
+    return;
+  }
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/users`, { headers: API._headers() });
+    if (!r.ok) throw new Error(`Failed (${r.status})`);
+    const list = await r.json();
+    if (badge) badge.textContent = list.length;
+    const me = S.currentUser?.id;
+    body.innerHTML = list.map(u => {
+      const isAdm = u.role === 'ADMIN';
+      const statusBadge = u.isActive
+        ? '<span class="status-badge st-approved">Active</span>'
+        : '<span class="status-badge st-rejected">Inactive</span>';
+      const roleBadge = `<span class="status-badge ${isAdm ? 'st-approved' : 'st-extracted'}">${isAdm ? 'Super Admin' : 'Employee'}</span>`;
+      const self = u.id === me;
+      const actions = self
+        ? '<span style="color:var(--w3);font-size:11px">(you)</span>'
+        : `<div class="action-btns">
+             ${u.isActive
+               ? `<button class="act-btn del" title="Deactivate" onclick="setUserActive('${u.id}',false)"><i class="fa-solid fa-user-slash"></i></button>`
+               : `<button class="act-btn apv" title="Activate" onclick="setUserActive('${u.id}',true)"><i class="fa-solid fa-user-check"></i></button>`}
+             ${isAdm
+               ? `<button class="act-btn" title="Make Employee" onclick="setUserRole('${u.id}','REVIEWER')"><i class="fa-solid fa-user"></i></button>`
+               : `<button class="act-btn" title="Make Super Admin" onclick="setUserRole('${u.id}','ADMIN')"><i class="fa-solid fa-user-shield"></i></button>`}
+           </div>`;
+      return `<tr>
+        <td>${esc(u.name)}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--teal)">${esc(u.email)}</td>
+        <td>${roleBadge}</td>
+        <td>${statusBadge}</td>
+        <td style="font-family:var(--mono);text-align:center">${u.uploads ?? 0}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--rose)">${esc(e.message)}</td></tr>`;
+  }
+}
+
+async function updateUser(id, data) {
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/users/${id}`, {
+      method: 'POST', headers: API._headers(), body: JSON.stringify(data),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Update failed');
+    toast('User updated', 's');
+    loadUsers();
+  } catch (e) { toast(e.message, 'e'); }
+}
+function setUserActive(id, active) {
+  if (!active && !confirm('Deactivate this user? They will not be able to log in.')) return;
+  updateUser(id, { isActive: active });
+}
+function setUserRole(id, role) {
+  const label = role === 'ADMIN' ? 'Super Admin' : 'Employee';
+  if (!confirm(`Change this user to ${label}?`)) return;
+  updateUser(id, { role });
+}
+
+async function doChangePassword() {
+  const cur = g('cpCurrent'), nw = g('cpNew');
+  if (!cur || !nw) return toast('Enter both current and new password', 'w');
+  if (nw.length < 6) return toast('New password must be at least 6 characters', 'w');
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/auth/change-password`, {
+      method: 'POST', headers: API._headers(), body: JSON.stringify({ currentPassword: cur, newPassword: nw }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Failed to change password');
+    const c1 = document.getElementById('cpCurrent'), c2 = document.getElementById('cpNew');
+    if (c1) c1.value = ''; if (c2) c2.value = '';
+    toast('Password updated', 's');
+  } catch (e) { toast(e.message, 'e'); }
 }
 
 function updateUserChip() {
@@ -2070,7 +2202,8 @@ const PAGE_TITLES = {
   duplicates:['Duplicate Detection', 'Review and resolve duplicate leads'],
   export:    ['Export to Cosmos CRM', 'Download leads as Cosmos-format CSV'],
   team:      ['Team Lead Report', 'Leads generated by each employee, by date'],
-  settings:  ['Settings', 'Configure API key and export defaults'],
+  users:     ['User Management', 'Add, deactivate and set roles for accounts'],
+  settings:  ['Settings', 'Configure API key, password and export defaults'],
 };
 
 function switchPage(page) {
@@ -2087,6 +2220,7 @@ function switchPage(page) {
   if (page==='leads')    renderTable('allLeadsBody', S.page.all);
   if (page==='duplicates') loadDuplicates();
   if (page==='team') loadTeamReport();
+  if (page==='users') loadUsers();
 }
 
 /* ══════════════════════════════════════════════════════════

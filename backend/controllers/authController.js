@@ -70,13 +70,30 @@ async function login(req, res, next) {
  */
 async function register(req, res, next) {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role, adminCode } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: "Name, email and password are required" });
     }
     if (String(password).length < 6) {
       return res.status(400).json({ error: "Password must be at least 6 characters" });
     }
+
+    // Default role is employee (REVIEWER). Creating a SUPER ADMIN via signup
+    // requires the ADMIN_SIGNUP_CODE so strangers can't grant themselves admin.
+    let assignedRole = "REVIEWER";
+    if (role === "ADMIN" || role === "super") {
+      const expected = process.env.ADMIN_SIGNUP_CODE || "";
+      if (!expected) {
+        return res.status(403).json({
+          error: "Super-admin signup is disabled. Ask an existing admin to promote your account, or set ADMIN_SIGNUP_CODE.",
+        });
+      }
+      if (String(adminCode || "") !== expected) {
+        return res.status(403).json({ error: "Invalid super-admin code." });
+      }
+      assignedRole = "ADMIN";
+    }
+
     const normEmail = String(email).toLowerCase().trim();
     const existing = await prisma.user.findUnique({ where: { email: normEmail } });
     if (existing) {
@@ -84,7 +101,7 @@ async function register(req, res, next) {
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { name: String(name).trim(), email: normEmail, passwordHash, role: "REVIEWER", isActive: true },
+      data: { name: String(name).trim(), email: normEmail, passwordHash, role: assignedRole, isActive: true },
     });
     const token = signToken(user);
     audit(req, "AUTH_REGISTER", "User", user.id).catch(() => {});
@@ -132,4 +149,32 @@ async function me(req, res, next) {
   }
 }
 
-module.exports = { login, register, logout, me };
+/**
+ * POST /api/auth/change-password  (authenticated)
+ * Body: { currentPassword, newPassword }. Any logged-in user changes their own.
+ */
+async function changePassword(req, res, next) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Current and new password are required" });
+    }
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters" });
+    }
+    const user = await prisma.user.findUnique({ where: { id: req.user.sub } });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!ok) return res.status(401).json({ error: "Current password is incorrect" });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await bcrypt.hash(newPassword, 10) },
+    });
+    audit(req, "AUTH_PASSWORD_CHANGE", "User", user.id).catch(() => {});
+    return res.json({ message: "Password updated" });
+  } catch (e) {
+    next(e);
+  }
+}
+
+module.exports = { login, register, logout, me, changePassword };
