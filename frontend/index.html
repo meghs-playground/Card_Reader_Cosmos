@@ -445,6 +445,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
     <div class="sb-item" data-page="team" id="navTeam" style="display:none"><i class="fa-solid fa-user-group"></i>Team Report</div>
     <div class="sb-item" data-page="users" id="navUsers" style="display:none"><i class="fa-solid fa-users-gear"></i>Users</div>
     <div class="sb-item" data-page="settings"><i class="fa-solid fa-gear"></i>Settings</div>
+    <div class="sb-item" id="sbLogout" onclick="doLogout()" style="display:none;color:var(--rose)"><i class="fa-solid fa-right-from-bracket"></i>Logout</div>
   </nav>
   <div class="sb-footer">Cosmos Impex India Pvt Ltd<br>Lead Intelligence Platform<br><span style="color:var(--teal);font-size:8px">CNC Manufacturer since 1987</span></div>
 </aside>
@@ -1260,16 +1261,21 @@ async function doChangePassword() {
 function updateUserChip() {
   const uc = document.getElementById('userChip');
   const lo = document.getElementById('logoutBtn');
+  const sb = document.getElementById('sbLogout');
   if (S.currentUser) {
     if (uc) {
       uc.style.display = '';
       uc.querySelector('.uc-name').textContent = S.currentUser.name || S.currentUser.email;
       uc.querySelector('.uc-role').textContent = isAdmin() ? 'Super Admin' : 'Employee';
     }
-    if (lo) lo.style.display = '';
+    // inline-flex forces the topbar Logout to show even on mobile, where the
+    // generic ".top-btn:not(.primary)" rule would otherwise hide it.
+    if (lo) lo.style.display = 'inline-flex';
+    if (sb) sb.style.display = 'flex';
   } else {
     if (uc) uc.style.display = 'none';
     if (lo) lo.style.display = 'none';
+    if (sb) sb.style.display = 'none';
   }
 }
 
@@ -1647,16 +1653,18 @@ async function processAll() {
 /* ══════════════════════════════════════════════════════════
    LEAD OPERATIONS
 ══════════════════════════════════════════════════════════ */
-// Re-login if the token is missing or expired so approvals always persist to
-// the backend instead of silently becoming local-only (which made approved
-// leads "come back" as Extracted after a refresh).
+// Returns true if there's a valid session. If the token is missing/expired it
+// sends the user to the login gate — it must NEVER silently log in as a shared
+// admin account (that previously made phones open straight into super-admin).
 async function ensureAuth() {
   if (AUTH_TOKEN) {
     const user = await API.me().catch(() => null);
-    if (user) return;
-    AUTH_TOKEN = null; localStorage.removeItem('cosmos_auth_token');
+    if (user) { S.currentUser = user; return true; }
+    AUTH_TOKEN = null; localStorage.removeItem('cosmos_auth_token'); S.currentUser = null;
   }
-  await API.login(DEMO_EMAIL, DEMO_PASSWORD);
+  showAuthGate(); switchAuthTab('login');
+  toast('Your session expired — please sign in again', 'w');
+  return false;
 }
 
 async function approveLead(id) {
@@ -1664,7 +1672,7 @@ async function approveLead(id) {
   if (!lead) return;
   try {
     if (BACKEND_ONLINE) {
-      await ensureAuth();
+      if (!(await ensureAuth())) return;
       await API.approveLead(id);
     }
     lead.status = 'Approved'; lead.updatedAt = now();
@@ -1681,7 +1689,7 @@ async function approveAll() {
   if (!pending.length) { toast('No extracted leads to approve', 'w'); return; }
   try {
     if (BACKEND_ONLINE) {
-      await ensureAuth();
+      if (!(await ensureAuth())) return;
       const ids = pending.map(l => l._id || l.id).filter(Boolean);
       const r = await fetch(`${BACKEND_URL}/api/leads/approve`, {
         method: 'POST',
@@ -2268,9 +2276,9 @@ function toast(msg, type='i', dur=3500) {
    INIT
 ══════════════════════════════════════════════════════════ */
 async function init() {
-  // Sidebar nav
+  // Sidebar nav (skip items with no page, e.g. the Logout button)
   document.querySelectorAll('.sb-item').forEach(el => {
-    el.addEventListener('click', () => switchPage(el.dataset.page));
+    el.addEventListener('click', () => { if (el.dataset.page) switchPage(el.dataset.page); });
   });
 
   // Mobile sidebar toggle
