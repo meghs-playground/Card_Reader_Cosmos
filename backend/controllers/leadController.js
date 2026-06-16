@@ -170,6 +170,14 @@ async function reject(req, res, next) {
 
 async function remove(req, res, next) {
   try {
+    // Employees may only delete their own leads (owner = the card's uploader).
+    if (req.user && req.user.role !== "ADMIN") {
+      const owned = await prisma.lead.findFirst({
+        where: { id: req.params.id, card: { upload: { uploadedById: req.user.sub } } },
+        select: { id: true },
+      });
+      if (!owned) return res.status(404).json({ error: "Lead not found" });
+    }
     await prisma.lead.delete({ where: { id: req.params.id } });
     await audit(req, "LEAD_DELETE", "Lead", req.params.id);
     res.status(204).end();

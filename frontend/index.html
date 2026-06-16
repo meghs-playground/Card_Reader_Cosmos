@@ -1407,12 +1407,19 @@ async function persistLead(lead) {
 async function deleteLead(id) {
   if (BACKEND_ONLINE) {
     try {
-      await fetch(`${BACKEND_URL}/api/leads/${id}`, { method: 'DELETE' });
-    } catch (_) {}
+      // Must send the auth token now that routes are protected — otherwise the
+      // backend rejects the delete and the lead reappears after a refresh.
+      const r = await fetch(`${BACKEND_URL}/api/leads/${id}`, { method: 'DELETE', headers: API._headers() });
+      if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'Not allowed' : `Delete failed (${r.status})`);
+    } catch (e) {
+      toast('Delete failed: ' + e.message, 'e');
+      return; // keep the lead — backend still has it
+    }
   }
   await IDB.del(id);
   S.leads = S.leads.filter(l => l._id !== id);
   renderAll();
+  toast('Lead deleted', 's');
 }
 
 // Flatten a backend lead (with contacts) into the fields the dup card shows.
