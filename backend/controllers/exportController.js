@@ -17,13 +17,17 @@ async function buildAndStream(req, res, next, format) {
       where.card = { upload: { uploadedById: req.user.sub } };
     }
 
-    // Optional date range (date-wise CSV). `to` is inclusive of the whole day.
+    // Optional date range (date-wise CSV). The frontend sends timezone-adjusted
+    // UTC timestamps so the range matches the dates shown in the app (local
+    // time). A bare YYYY-MM-DD `to` (e.g. a manual API call) still covers the
+    // whole UTC day.
     if (req.query.from || req.query.to) {
       where.createdAt = {};
       if (req.query.from) where.createdAt.gte = new Date(req.query.from);
       if (req.query.to) {
-        const t = new Date(req.query.to);
-        t.setHours(23, 59, 59, 999);
+        const raw = String(req.query.to);
+        const t = new Date(raw);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) t.setUTCHours(23, 59, 59, 999);
         where.createdAt.lte = t;
       }
     }

@@ -1866,8 +1866,11 @@ async function doExport() {
     // the token — fetch it as a blob with the Authorization header instead.
     const params = new URLSearchParams();
     if (statusFilter !== 'all') params.set('status', statusFilter);
-    if (from) params.set('from', from);
-    if (to) params.set('to', to);
+    // Convert the picked LOCAL dates to UTC timestamps so the export matches the
+    // dates shown in the app (which are in the user's local timezone). Otherwise
+    // a lead shown as "16 Jun" but stored late on the 15th UTC would be missed.
+    if (from) params.set('from', new Date(from + 'T00:00:00').toISOString());
+    if (to) params.set('to', new Date(to + 'T23:59:59.999').toISOString());
     const qs = params.toString() ? `?${params.toString()}` : '';
     try {
       toast('Preparing CSV…', 'i');
@@ -1921,21 +1924,23 @@ function fmtDate(d) {
 function renderLeadsByDate() {
   const el = document.getElementById('leadsByDate');
   if (!el) return;
-  const counts = {}; // ISO date (YYYY-MM-DD) -> count
+  const groups = {}; // local date (YYYY-MM-DD) -> { label, count }
   for (const l of S.leads) {
     const raw = l.createdAt || l.created_at;
     if (!raw) continue;
     const dt = new Date(raw);
     if (isNaN(dt.getTime())) continue;
-    const key = dt.toISOString().slice(0, 10);
-    counts[key] = (counts[key] || 0) + 1;
+    // Local date key, so it matches the Date column (fmtDate) and the export.
+    const key = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+    if (!groups[key]) groups[key] = { label: fmtDate(raw), count: 0 };
+    groups[key].count++;
   }
-  const entries = Object.entries(counts).sort((a, b) => b[0].localeCompare(a[0])); // newest date first
+  const entries = Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0])); // newest date first
   if (!entries.length) { el.innerHTML = ''; return; }
   el.innerHTML =
     '<span style="font-size:10px;color:var(--w3);align-self:center;margin-right:2px">Leads by date:</span>' +
-    entries.map(([iso, n]) =>
-      `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--w2)">${fmtDate(iso)}<span style="background:var(--teal2);color:var(--teal);border-radius:8px;padding:0 6px;font-weight:700;font-family:var(--mono)">${n}</span></span>`
+    entries.map(([key, g]) =>
+      `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--w2)">${g.label}<span style="background:var(--teal2);color:var(--teal);border-radius:8px;padding:0 6px;font-weight:700;font-family:var(--mono)">${g.count}</span></span>`
     ).join('');
 }
 
