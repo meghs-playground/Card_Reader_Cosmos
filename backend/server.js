@@ -20,7 +20,22 @@ const server = app.listen(PORT, async () => {
     const { resetStuckUploads } = require("./services/queueService");
     await resetStuckUploads();
   } catch (_) {}
+
+  // Trash auto-purge: permanently remove leads trashed > 30 days ago. Run now
+  // and once a day.
+  purgeOldTrash();
+  setInterval(purgeOldTrash, 24 * 60 * 60 * 1000).unref();
 });
+
+async function purgeOldTrash() {
+  try {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const result = await prisma.lead.deleteMany({ where: { deletedAt: { lt: cutoff } } });
+    if (result.count) console.log(`[trash] purged ${result.count} lead(s) trashed > 30 days ago`);
+  } catch (e) {
+    console.error("[trash] purge failed:", e.message);
+  }
+}
 
 async function shutdown(signal) {
   console.log(`Received ${signal} — shutting down gracefully`);

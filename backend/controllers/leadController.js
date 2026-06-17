@@ -50,7 +50,7 @@ function pickEditableFields(body) {
 async function listLeads(req, res, next) {
   try {
     const { status, q, take = 50, skip = 0 } = req.query;
-    const where = {};
+    const where = { deletedAt: null }; // hide trashed leads from the active list
     // Employees (non-admin) see only the leads they scanned. The owner is the
     // user who uploaded the lead's source card. ADMIN (super-admin) sees all.
     if (req.user && req.user.role !== "ADMIN") {
@@ -168,22 +168,75 @@ async function reject(req, res, next) {
   }
 }
 
+/** Ownership guard: non-admins may only act on their own leads. */
+async function ownsLeadOr404(req, res) {
+  if (req.user && req.user.role !== "ADMIN") {
+    const owned = await prisma.lead.findFirst({
+      where: { id: req.params.id, card: { upload: { uploadedById: req.user.sub } } },
+      select: { id: true },
+    });
+    if (!owned) { res.status(404).json({ error: "Lead not found" }); return false; }
+  }
+  return true;
+}
+
+/** Soft delete — move the lead to Trash (recoverable for 30 days). */
 async function remove(req, res, next) {
   try {
-    // Employees may only delete their own leads (owner = the card's uploader).
-    if (req.user && req.user.role !== "ADMIN") {
-      const owned = await prisma.lead.findFirst({
-        where: { id: req.params.id, card: { upload: { uploadedById: req.user.sub } } },
-        select: { id: true },
-      });
-      if (!owned) return res.status(404).json({ error: "Lead not found" });
-    }
-    await prisma.lead.delete({ where: { id: req.params.id } });
-    await audit(req, "LEAD_DELETE", "Lead", req.params.id);
+    if (!(await ownsLeadOr404(req, res))) return;
+    await prisma.lead.update({ where: { id: req.params.id }, data: { deletedAt: new Date() } });
+    await audit(req, "LEAD_TRASH", "Lead", req.params.id);
     res.status(204).end();
   } catch (e) {
     next(e);
   }
 }
 
-module.exports = { listLeads, getLead, updateLead, approve, reject, remove };
+/** List trashed leads (in Trash), scoped to owner for non-admins. */
+async function listTrash(req, res, next) {
+  try {
+    const where = { deletedAt: { not: null } };
+    if (req.user && req.user.role !== "ADMIN") {
+      where.card = { upload: { uploadedById: req.user.sub } };
+    }
+    const items = await prisma.lead.findMany({
+      where,
+      include: LEAD_INCLUDE,
+      orderBy: { deletedAt: "desc" },
+      take: 200,
+    });
+    res.json({ items, total: items.length });
+  } catch (e) {
+    next(e);
+  }
+}
+
+/** Restore a lead from Trash. */
+async function restore(req, res, next) {
+  try {
+    if (!(await ownsLeadOr404(req, res))) return;
+    const lead = await prisma.lead.update({
+      where: { id: req.params.id },
+      data: { deletedAt: null },
+      include: LEAD_INCLUDE,
+    });
+    await audit(req, "LEAD_RESTORE", "Lead", req.params.id);
+    res.json(lead);
+  } catch (e) {
+    next(e);
+  }
+}
+
+/** Permanently delete a lead (from Trash). */
+async function purge(req, res, next) {
+  try {
+    if (!(await ownsLeadOr404(req, res))) return;
+    await prisma.lead.delete({ where: { id: req.params.id } });
+    await audit(req, "LEAD_DELETE_PERMANENT", "Lead", req.params.id);
+    res.status(204).end();
+  } catch (e) {
+    next(e);
+  }
+}
+
+module.exports = { listLeads, getLead, updateLead, approve, reject, remove, listTrash, restore, purge };

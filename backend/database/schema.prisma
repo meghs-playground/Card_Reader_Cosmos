@@ -208,6 +208,9 @@ model Lead {
   scannedAt      DateTime    @default(now())
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+  // Soft delete: set when "deleted" (moved to Trash). A scheduled job hard-
+  // deletes rows where deletedAt is older than 30 days.
+  deletedAt      DateTime?
 
   contacts       Contact[]
   duplicatesA    Duplicate[] @relation("DupLeadA")
@@ -218,6 +221,7 @@ model Lead {
   @@index([email])
   @@index([source])
   @@index([createdAt])
+  @@index([deletedAt])
   @@map("leads")
 }
 

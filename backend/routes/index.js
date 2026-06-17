@@ -62,8 +62,11 @@ router.post("/uploads/:id/reprocess", upload.reprocessUpload);
 
 // ---- Leads (read scoped to owner for non-admins, in the controller) ----
 router.get("/leads", lead.listLeads);
+router.get("/leads/trash", lead.listTrash);                 // before /leads/:id
 router.get("/leads/:id", lead.getLead);
-router.delete("/leads/:id", lead.remove);
+router.delete("/leads/:id", lead.remove);                   // soft delete -> Trash
+router.post("/leads/:id/restore", lead.restore);
+router.delete("/leads/:id/permanent", lead.purge);          // hard delete from Trash
 router.put("/leads/:id", authorize("ADMIN", "REVIEWER"), lead.updateLead);
 router.post("/leads/approve", authorize("ADMIN", "REVIEWER"), lead.approve);    // body: { ids: [] }
 router.post("/leads/:id/approve", authorize("ADMIN", "REVIEWER"), lead.approve);

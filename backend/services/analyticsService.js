@@ -36,13 +36,13 @@ async function dashboard(prisma) {
     prisma.upload.count(),
     prisma.card.count(),
     prisma.ocrResult.count(),
-    prisma.lead.count(),
+    prisma.lead.count({ where: { deletedAt: null } }),
     prisma.duplicate.count({ where: { status: "OPEN" } }),
     prisma.export.count(),
-    prisma.lead.count({ where: { status: "APPROVED" } }),
+    prisma.lead.count({ where: { status: "APPROVED", deletedAt: null } }),
     prisma.company.groupBy({ by: ["industry"], _count: { _all: true } }),
-    prisma.lead.groupBy({ by: ["city"], _count: { _all: true } }),
-    prisma.lead.groupBy({ by: ["state"], _count: { _all: true } }),
+    prisma.lead.groupBy({ by: ["city"], _count: { _all: true }, where: { deletedAt: null } }),
+    prisma.lead.groupBy({ by: ["state"], _count: { _all: true }, where: { deletedAt: null } }),
     prisma.upload.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
     prisma.export.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
@@ -170,6 +170,7 @@ async function employeeReport(prisma) {
     JOIN cards   c  ON c.id  = l."cardId"
     JOIN uploads up ON up.id = c."uploadId"
     JOIN users   u  ON u.id  = up."uploadedById"
+    WHERE l."deletedAt" IS NULL
     GROUP BY u.id, u.name, u.email, to_char(l."createdAt", 'YYYY-MM-DD')
     ORDER BY "date" DESC, "count" DESC
   `;

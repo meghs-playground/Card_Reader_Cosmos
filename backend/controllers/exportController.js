@@ -4,7 +4,7 @@ const { audit } = require("../middleware/audit");
 
 async function buildAndStream(req, res, next, format) {
   try {
-    const where = {};
+    const where = { deletedAt: null }; // never export trashed leads
     if (req.query.status && req.query.status !== 'all') {
       where.status = req.query.status === 'Extracted' ? 'PENDING_REVIEW' : req.query.status.toUpperCase();
     } else {

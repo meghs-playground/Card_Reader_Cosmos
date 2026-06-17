@@ -269,7 +269,7 @@ function scheduleDuplicateScan() {
     try {
       const { findDuplicates } = require("./duplicateDetection");
       const leads = await prisma.lead.findMany({
-        where: { status: { in: ["PENDING_REVIEW", "APPROVED"] } },
+        where: { deletedAt: null, status: { in: ["PENDING_REVIEW", "APPROVED"] } },
         select: { id: true, email: true, phonePrimary: true, companyName: true, city: true },
       });
       const dupes = findDuplicates(leads);

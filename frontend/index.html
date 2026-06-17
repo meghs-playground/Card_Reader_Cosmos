@@ -442,6 +442,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
     <div class="sb-item" data-page="leads"><i class="fa-solid fa-users"></i>All Leads</div>
     <div class="sb-item" data-page="duplicates"><i class="fa-solid fa-copy"></i>Duplicates<span class="sb-badge orange" id="dupBadge">0</span></div>
     <div class="sb-item" data-page="export"><i class="fa-solid fa-download"></i>Export Data</div>
+    <div class="sb-item" data-page="trash"><i class="fa-solid fa-trash-can"></i>Trash</div>
     <div class="sb-item" data-page="team" id="navTeam" style="display:none"><i class="fa-solid fa-user-group"></i>Team Report</div>
     <div class="sb-item" data-page="users" id="navUsers" style="display:none"><i class="fa-solid fa-users-gear"></i>Users</div>
     <div class="sb-item" data-page="settings"><i class="fa-solid fa-gear"></i>Settings</div>
@@ -732,6 +733,23 @@ body{font-family:var(--sans);background:var(--bg);color:var(--w1);height:100%;ov
     </div>
 
     <!-- ══ SETTINGS PAGE ══ -->
+    <!-- ══ TRASH ══ -->
+    <div id="pg-trash" class="pg">
+      <div class="leads-panel">
+        <div class="leads-toolbar">
+          <div class="leads-title">Trash <span class="count-badge" id="trashBadge">0</span></div>
+          <button class="approve-btn" onclick="loadTrash()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div class="hint" style="margin-bottom:10px">Deleted leads are kept here for 30 days, then permanently removed automatically. Restore brings a lead back to your list.</div>
+        <div style="overflow-x:auto">
+          <table class="leads-table">
+            <thead><tr><th>Contact Person</th><th>Company</th><th>Email</th><th>Deleted</th><th>Actions</th></tr></thead>
+            <tbody id="trashBody"><tr><td colspan="5" style="text-align:center;padding:30px;color:var(--w3)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ USERS (super-admin) ══ -->
     <div id="pg-users" class="pg">
       <div class="leads-panel">
@@ -1280,6 +1298,65 @@ function updateUserChip() {
 }
 
 /* ══════════════════════════════════════════════════════════
+   TRASH (soft-deleted leads, auto-purged after 30 days)
+══════════════════════════════════════════════════════════ */
+async function loadTrash() {
+  const body = document.getElementById('trashBody');
+  const badge = document.getElementById('trashBadge');
+  if (!body) return;
+  if (!(BACKEND_ONLINE && AUTH_TOKEN)) {
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--w3)">Please log in</td></tr>';
+    return;
+  }
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/leads/trash`, { headers: API._headers() });
+    if (!r.ok) throw new Error(`Failed (${r.status})`);
+    const d = await r.json();
+    const items = d.items || [];
+    if (badge) badge.textContent = items.length;
+    if (!items.length) {
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--w3)">Trash is empty</td></tr>';
+      return;
+    }
+    body.innerHTML = items.map(l => {
+      const pc = (l.contacts || []).find(c => c.isPrimary) || (l.contacts || [])[0] || {};
+      return `<tr>
+        <td>${esc(pc.fullName) || '—'}</td>
+        <td>${esc(l.companyName) || '—'}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--teal)">${esc(pc.email || l.email) || '—'}</td>
+        <td style="font-family:var(--mono);font-size:10px;white-space:nowrap">${fmtDate(l.deletedAt)}</td>
+        <td><div class="action-btns">
+          <button class="act-btn apv" title="Restore" onclick="restoreLead('${l.id}')"><i class="fa-solid fa-rotate-left"></i></button>
+          <button class="act-btn del" title="Delete forever" onclick="purgeLead('${l.id}')"><i class="fa-solid fa-xmark"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--rose)">${esc(e.message)}</td></tr>`;
+  }
+}
+
+async function restoreLead(id) {
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/leads/${id}/restore`, { method: 'POST', headers: API._headers() });
+    if (!r.ok) throw new Error(`Restore failed (${r.status})`);
+    toast('Lead restored', 's');
+    loadTrash();
+    await loadLeads();
+  } catch (e) { toast(e.message, 'e'); }
+}
+
+async function purgeLead(id) {
+  if (!confirm('Permanently delete this lead? This cannot be undone.')) return;
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/leads/${id}/permanent`, { method: 'DELETE', headers: API._headers() });
+    if (!r.ok) throw new Error(`Delete failed (${r.status})`);
+    toast('Lead permanently deleted', 's');
+    loadTrash();
+  } catch (e) { toast(e.message, 'e'); }
+}
+
+/* ══════════════════════════════════════════════════════════
    TEAM REPORT (super-admin)
 ══════════════════════════════════════════════════════════ */
 async function loadTeamReport() {
@@ -1425,7 +1502,7 @@ async function deleteLead(id) {
   await IDB.del(id);
   S.leads = S.leads.filter(l => l._id !== id);
   renderAll();
-  toast('Lead deleted', 's');
+  toast('Lead moved to Trash', 's');
 }
 
 // Flatten a backend lead (with contacts) into the fields the dup card shows.
@@ -2047,7 +2124,7 @@ async function mergeDup(i) {
     }
     S.duplicates.splice(i, 1);
     renderDuplicates(); updateStats();
-    toast('Leads merged (Lead A kept)', 's');
+    toast('Leads merged into one', 's');
     if (BACKEND_ONLINE) loadLeads();
   } catch (e) {
     toast('Merge failed: ' + e.message, 'e');
@@ -2216,6 +2293,7 @@ const PAGE_TITLES = {
   leads:     ['All Leads', 'Browse, filter and manage extracted leads'],
   duplicates:['Duplicate Detection', 'Review and resolve duplicate leads'],
   export:    ['Export to Cosmos CRM', 'Download leads as Cosmos-format CSV'],
+  trash:     ['Trash', 'Deleted leads — restore within 30 days'],
   team:      ['Team Lead Report', 'Leads generated by each employee, by date'],
   users:     ['User Management', 'Add, deactivate and set roles for accounts'],
   settings:  ['Settings', 'Configure API key, password and export defaults'],
@@ -2236,6 +2314,7 @@ function switchPage(page) {
   if (page==='duplicates') loadDuplicates();
   if (page==='team') loadTeamReport();
   if (page==='users') loadUsers();
+  if (page==='trash') loadTrash();
 }
 
 /* ══════════════════════════════════════════════════════════
