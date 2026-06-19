@@ -1039,10 +1039,16 @@ const API = {
   },
 
   async checkHealth(timeoutMs = 8000) {
+    // AbortController + setTimeout works everywhere (Safari 11.1+); the newer
+    // AbortSignal.timeout() needs Safari 16+, which would otherwise make older
+    // Safari think the backend is offline.
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
-      const r = await fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(timeoutMs) });
+      const r = await fetch(`${BACKEND_URL}/health`, { signal: ctrl.signal });
       return r.ok;
     } catch { return false; }
+    finally { clearTimeout(t); }
   },
 };
 
